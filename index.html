@@ -154,6 +154,24 @@
     .flash { animation: flash 0.4s ease; }
 
     .section-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
+
+    /* TONNAGE */
+    .tonnage-badge { font-size: 11px; color: var(--accent); background: var(--accent-dim); border-radius: 6px; padding: 2px 7px; font-weight: 600; letter-spacing: 0.04em; }
+    .session-tonnage { display: flex; justify-content: center; gap: 6px; align-items: baseline; margin-top: 6px; }
+    .session-tonnage-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); letter-spacing: 0.04em; }
+    .session-tonnage-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+    .weekly-tonnage-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .weekly-col { text-align: center; }
+    .weekly-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); letter-spacing: 0.04em; line-height: 1; }
+    .weekly-val.dim { color: var(--text2); font-size: 22px; }
+    .weekly-lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .weekly-divider { width: 1px; height: 40px; background: var(--border); }
+    .weekly-delta { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+    .weekly-delta.up { color: var(--accent); background: var(--accent-dim); }
+    .weekly-delta.down { color: var(--red); background: var(--red-dim); }
+    .weekly-delta.flat { color: var(--text2); background: var(--bg3); }
+    .detail-tonnage-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; color: var(--text2); border-top: 0.5px solid var(--border); margin-top: 4px; }
+    .detail-tonnage-row span:last-child { color: var(--accent); font-weight: 600; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.04em; }
   </style>
 </head>
 <body>
@@ -185,6 +203,7 @@
     <!-- HISTORY -->
     <div class="screen" id="screen-history">
       <div class="page-header"><span class="page-title">History</span></div>
+      <div id="weekly-tonnage-area"></div>
       <div id="history-list"></div>
     </div>
 
@@ -357,7 +376,9 @@ function renderToday() {
     </button>`;
   } else {
     const dur = fmtDuration(Date.now() - state.activeWorkout.startTime);
-    statusArea.innerHTML = `<div class="workout-status active-workout"><div class="status-label">Active Workout</div><div class="timer-display" id="timer-val">${dur}</div></div>`;
+    const sessionTon = calcSessionTonnage(state.activeWorkout);
+    const tonDisplay = sessionTon > 0 ? `<div class="session-tonnage"><span class="session-tonnage-val">${fmtTonnage(sessionTon)}</span><span class="session-tonnage-label">lbs moved</span></div>` : '';
+    statusArea.innerHTML = `<div class="workout-status active-workout"><div class="status-label">Active Workout</div><div class="timer-display" id="timer-val">${dur}</div>${tonDisplay}</div>`;
     startTimer();
     exArea.innerHTML = state.activeWorkout.exercises.map((ex, ei) => renderExerciseBlock(ex, ei)).join('');
     actionsArea.innerHTML = `
@@ -377,6 +398,8 @@ function renderToday() {
 }
 
 function renderExerciseBlock(ex, ei) {
+  const ton = calcExTonnage(ex);
+  const tonBadge = ton > 0 ? `<span class="tonnage-badge">${fmtTonnage(ton)} lbs</span>` : '';
   const sets = ex.sets.map((set, si) => `
     <div class="set-row" id="set-${ei}-${si}">
       <span class="set-num">${si + 1}</span>
@@ -391,6 +414,7 @@ function renderExerciseBlock(ex, ei) {
       <div class="exercise-header">
         <span class="exercise-name">${ex.name}</span>
         <div class="ex-actions">
+          ${tonBadge}
           <button class="btn btn-icon" onclick="removeExercise(${ei})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           </button>
@@ -651,8 +675,74 @@ function confirmImport() {
   showScreen('templates');
 }
 
+// ── TONNAGE ──
+function calcExTonnage(ex) {
+  return ex.sets.reduce((sum, s) => {
+    const w = parseFloat(s.weight) || 0;
+    const r = parseFloat(s.reps) || 0;
+    return sum + (w * r);
+  }, 0);
+}
+
+function calcSessionTonnage(workout) {
+  return workout.exercises.reduce((sum, ex) => sum + calcExTonnage(ex), 0);
+}
+
+function fmtTonnage(lbs) {
+  if (lbs >= 1000) return (lbs / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return Math.round(lbs).toLocaleString();
+}
+
+function getWeekBounds(offsetWeeks = 0) {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const startOfWeek = new Date(now);
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(now.getDate() - day - offsetWeeks * 7);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+  return { start: startOfWeek.getTime(), end: endOfWeek.getTime() };
+}
+
+function weeklyTonnage(offsetWeeks = 0) {
+  const { start, end } = getWeekBounds(offsetWeeks);
+  return state.workouts
+    .filter(w => w.startTime >= start && w.startTime < end)
+    .reduce((sum, w) => sum + calcSessionTonnage(w), 0);
+}
+
+function renderWeeklyTonnage() {
+  const area = document.getElementById('weekly-tonnage-area');
+  if (!area) return;
+  const thisWeek = weeklyTonnage(0);
+  const lastWeek = weeklyTonnage(1);
+  if (thisWeek === 0 && lastWeek === 0) { area.innerHTML = ''; return; }
+  let delta = '', deltaClass = 'flat';
+  if (lastWeek > 0) {
+    const pct = Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
+    if (pct > 0) { delta = `↑ ${pct}%`; deltaClass = 'up'; }
+    else if (pct < 0) { delta = `↓ ${Math.abs(pct)}%`; deltaClass = 'down'; }
+    else { delta = '→ Same'; deltaClass = 'flat'; }
+  } else if (thisWeek > 0) {
+    delta = 'New week'; deltaClass = 'up';
+  }
+  area.innerHTML = `<div class="weekly-tonnage-card">
+    <div class="weekly-col">
+      <div class="weekly-val">${fmtTonnage(thisWeek)} <span style="font-size:14px;color:var(--text2);font-family:'DM Sans',sans-serif;letter-spacing:0">lbs</span></div>
+      <div class="weekly-lbl">This week</div>
+    </div>
+    <div class="weekly-divider"></div>
+    <div class="weekly-col">
+      <div class="weekly-val dim">${fmtTonnage(lastWeek)}</div>
+      <div class="weekly-lbl">Last week</div>
+    </div>
+    ${delta ? `<div class="weekly-divider"></div><div class="weekly-col"><div class="weekly-delta ${deltaClass}">${delta}</div><div class="weekly-lbl">vs last</div></div>` : ''}
+  </div>`;
+}
+
 // ── HISTORY ──
 function renderHistory() {
+  renderWeeklyTonnage();
   const list = document.getElementById('history-list');
   if (state.workouts.length === 0) {
     list.innerHTML = `<div class="empty"><div class="empty-icon">🏋️</div><div class="empty-title">No workouts yet</div><p>Complete your first session and it'll show up here.</p></div>`;
@@ -664,6 +754,8 @@ function renderHistory() {
     const day = new Date(w.startTime).toDateString();
     if (day !== lastDay) { html += `<div class="history-date">${fmtDate(w.startTime)}</div>`; lastDay = day; }
     const exNames = w.exercises.map(e => e.name);
+    const ton = calcSessionTonnage(w);
+    const tonStr = ton > 0 ? `<span class="tonnage-badge">${fmtTonnage(ton)} lbs</span>` : '';
     const pills = exNames.slice(0, 4).map(n => {
       const isPR = prs[n] && prs[n].workoutId === w.id;
       return `<span class="pill ${isPR ? 'pr' : ''}">${isPR ? '🏆 ' : ''}${n}</span>`;
@@ -673,6 +765,7 @@ function renderHistory() {
       <div class="history-card-top">
         <span class="history-workout-name">${w.exercises.length} Exercise${w.exercises.length !== 1 ? 's' : ''}</span>
         <div style="display:flex;align-items:center;gap:10px">
+          ${tonStr}
           <span class="history-duration">${fmtDuration(w.duration)}</span>
           <button class="btn btn-icon" style="padding:6px;background:var(--red-dim);color:var(--red)" onclick="event.stopPropagation();deleteWorkout(${w.id})">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -719,12 +812,21 @@ function showDetail(id) {
     Copy for Claude
   </button>`;
   for (const ex of w.exercises) {
+    const exTon = calcExTonnage(ex);
     html += `<div class="detail-ex"><div class="detail-ex-name">${ex.name}</div>
       <div class="detail-set-row header"><span>Set</span><span>Weight</span><span>Reps</span></div>`;
     ex.sets.forEach((s, i) => {
       html += `<div class="detail-set-row"><span>${i+1}</span><span>${s.weight ? s.weight+' lbs' : '—'}</span><span>${s.reps || '—'}</span></div>`;
     });
+    if (exTon > 0) html += `<div class="detail-tonnage-row"><span>Tonnage</span><span>${fmtTonnage(exTon)} lbs</span></div>`;
     html += `</div>`;
+  }
+  const totalTon = calcSessionTonnage(w);
+  if (totalTon > 0) {
+    html += `<div class="card" style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Total Tonnage</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:0.04em">${fmtTonnage(totalTon)} <span style="font-size:14px;color:var(--text2);font-family:'DM Sans',sans-serif">lbs</span></span>
+    </div>`;
   }
   document.getElementById('detail-content').innerHTML = html;
   document.getElementById('detail-overlay').classList.add('open');
