@@ -83,28 +83,6 @@
     .btn-start { background: var(--accent); color: #0f0f0f; padding: 7px 14px; font-size: 13px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
     .btn-start:active { opacity: 0.7; }
 
-    /* PLAN GROUPS */
-    .plan-group { margin-bottom: 24px; }
-    .plan-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
-    .plan-group-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.04em; color: var(--text); }
-    .plan-group-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
-
-    /* TODAY SUGGESTIONS */
-    .today-suggestions { margin-bottom: 16px; }
-    .today-suggestion-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-    .today-suggestion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-    .today-suggestion-card.rest { opacity: 0.7; }
-    .today-suggestion-left { flex: 1; }
-    .today-suggestion-plan { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
-    .today-suggestion-name { font-weight: 500; font-size: 15px; }
-    .today-suggestion-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-    .rest-badge { font-size: 11px; font-weight: 600; background: var(--bg3); color: var(--text2); border-radius: 6px; padding: 3px 8px; letter-spacing: 0.04em; }
-
-    /* CREATE TEMPLATE EXERCISES */
-    .create-ex-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
-    .create-ex-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .create-ex-meta { font-size: 12px; color: var(--text2); }
-
     /* HISTORY */
     .history-date { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 8px; }
     .history-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color 0.15s; }
@@ -174,6 +152,33 @@
 
     @keyframes flash { 0%, 100% { background: var(--surface); } 50% { background: var(--accent-dim); } }
     .flash { animation: flash 0.4s ease; }
+
+    /* TODAY WORKOUT CARD */
+    .today-workout-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
+    .today-workout-card:active { border-color: var(--border2); }
+    .today-workout-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .completed-stamp { display: flex; align-items: center; gap: 5px; background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
+    .today-workout-name { font-weight: 600; font-size: 16px; margin-bottom: 2px; }
+    .today-workout-meta { font-size: 13px; color: var(--text2); }
+    .today-suggestion-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .today-suggestion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .today-suggestion-card.rest { opacity: 0.7; }
+    .today-suggestion-left { flex: 1; }
+    .today-suggestion-plan { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+    .today-suggestion-name { font-weight: 500; font-size: 15px; }
+    .today-suggestion-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .rest-badge { font-size: 11px; font-weight: 600; background: var(--bg3); color: var(--text2); border-radius: 6px; padding: 3px 8px; letter-spacing: 0.04em; }
+
+    /* PLAN GROUPS */
+    .plan-group { margin-bottom: 24px; }
+    .plan-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
+    .plan-group-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.04em; color: var(--text); }
+    .plan-group-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+    /* CREATE TEMPLATE EXERCISES */
+    .create-ex-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+    .create-ex-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .create-ex-meta { font-size: 12px; color: var(--text2); }
 
     .section-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
 
@@ -366,7 +371,7 @@
     <div class="modal-title">Import Plan</div>
     <div class="input-group">
       <div class="input-label">Plan Name</div>
-      <input type="text" class="text-input" id="import-plan-name" placeholder="e.g. 12-Week Strength" autocomplete="off" style="margin-bottom:0" />
+      <input type="text" class="text-input" id="import-plan-name" placeholder="e.g. 12-Week Strength" autocomplete="off" />
     </div>
     <div class="input-group">
       <div class="input-label">Paste your workout plan</div>
@@ -468,12 +473,41 @@ function renderToday() {
   const actionsArea = document.getElementById('today-actions');
 
   if (!state.activeWorkout) {
-    statusArea.innerHTML = `<div class="workout-status"><div class="status-label">Ready to train?</div><div class="status-big">Start Workout</div></div>`;
-    exArea.innerHTML = renderTodaySuggestions();
-    actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Begin Session
-    </button>`;
+    const todayWorkout = getTodayCompletedWorkout();
+    if (todayWorkout) {
+      // Already worked out today — show completed card
+      statusArea.innerHTML = '';
+      const ton = calcSessionTonnage(todayWorkout);
+      const tonStr = ton > 0 ? ` · ${fmtTonnage(ton)} lbs` : '';
+      exArea.innerHTML = `<div class="today-workout-card" onclick="openCompletedDetail(${todayWorkout.id})">
+        <div class="today-workout-card-top">
+          <div>
+            <div class="today-workout-name">${todayWorkout.exercises.length} Exercise${todayWorkout.exercises.length !== 1 ? 's' : ''}</div>
+            <div class="today-workout-meta">${fmtDuration(todayWorkout.duration)}${tonStr}</div>
+          </div>
+          <div class="completed-stamp">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            Completed
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${todayWorkout.exercises.slice(0,5).map(e => `<span class="pill">${e.name}</span>`).join('')}
+          ${todayWorkout.exercises.length > 5 ? `<span class="pill">+${todayWorkout.exercises.length - 5} more</span>` : ''}
+        </div>
+      </div>`;
+      actionsArea.innerHTML = `<button class="btn btn-ghost" onclick="startWorkout()" style="width:100%;justify-content:center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Another Session
+      </button>`;
+    } else {
+      // No workout today — show plan suggestions or plain start
+      statusArea.innerHTML = `<div class="workout-status"><div class="status-label">Ready to train?</div><div class="status-big">Start Workout</div></div>`;
+      exArea.innerHTML = renderTodaySuggestions();
+      actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Begin Session
+      </button>`;
+    }
   } else {
     const dur = fmtDuration(Date.now() - state.activeWorkout.startTime);
     const sessionTon = calcSessionTonnage(state.activeWorkout);
@@ -528,7 +562,6 @@ function renderExerciseBlock(ex, ei) {
     </div>`;
 }
 
-// planId + templateIdx identifies a specific template across plans
 function startWorkout(planId, templateIdx) {
   let exercises = [];
   if (planId !== undefined && templateIdx !== undefined) {
@@ -546,12 +579,20 @@ function startWorkout(planId, templateIdx) {
   if (exercises.length === 0) setTimeout(() => openModal('add-exercise-modal'), 100);
 }
 
-// Returns the day name for today e.g. "Monday"
+function getTodayCompletedWorkout() {
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end = new Date(); end.setHours(23,59,59,999);
+  return state.workouts.find(w => w.startTime >= start.getTime() && w.startTime <= end.getTime()) || null;
+}
+
+function openCompletedDetail(id) {
+  showDetail(id);
+}
+
 function todayDayName() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long' });
 }
 
-// Render today's suggestions from all plans
 function renderTodaySuggestions() {
   if (!state.plans || state.plans.length === 0) return '';
   const today = todayDayName().toLowerCase();
@@ -567,21 +608,21 @@ function renderTodaySuggestions() {
       if (!tDay.includes(today) && !tDay.includes(todayShort)) continue;
       const isRest = /rest|recovery|active recovery|off/i.test(t.name);
       const exCount = t.exercises ? t.exercises.length : 0;
-      const startBtn = isRest
+      const rightSide = isRest
         ? `<span class="rest-badge">Rest Day</span>`
         : `<button class="btn-start" onclick="startWorkout(${plan.id}, ${ti})">Start</button>`;
       cards += `<div class="today-suggestion-card${isRest ? ' rest' : ''}">
         <div class="today-suggestion-left">
           <div class="today-suggestion-plan">${plan.name}</div>
           <div class="today-suggestion-name">${t.name}</div>
-          <div class="today-suggestion-meta">${isRest ? 'No training today' : exCount + ' exercises'}</div>
+          <div class="today-suggestion-meta">${isRest ? 'Rest day' : exCount + ' exercises'}</div>
         </div>
-        ${startBtn}
+        ${rightSide}
       </div>`;
     }
   }
   if (!cards) return '';
-  return `<div class="today-suggestions">
+  return `<div style="margin-bottom:16px">
     <div class="today-suggestion-label">On your plan today</div>
     ${cards}
   </div>`;
@@ -660,7 +701,6 @@ function renderTemplates() {
     </div>`;
     return;
   }
-
   list.innerHTML = state.plans.map(plan => {
     const templatesHtml = plan.templates.map((t, ti) => {
       const isRest = /rest|recovery|active recovery|off/i.test(t.name);
@@ -685,7 +725,6 @@ function renderTemplates() {
         </div>` : ''}
       </div>`;
     }).join('');
-
     const importedDate = plan.importedAt ? new Date(plan.importedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
     return `<div class="plan-group">
       <div class="plan-group-header">
@@ -693,7 +732,7 @@ function renderTemplates() {
           <div class="plan-group-name">${plan.name}</div>
           ${importedDate ? `<div class="plan-group-meta">${plan.templates.length} workouts · added ${importedDate}</div>` : ''}
         </div>
-        <button class="btn btn-icon" onclick="deletePlan(${plan.id})" title="Delete plan" style="background:var(--red-dim);color:var(--red)">
+        <button class="btn btn-icon" onclick="deletePlan(${plan.id})" style="background:var(--red-dim);color:var(--red)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>
       </div>
@@ -734,6 +773,7 @@ function ctRemoveExercise(i) {
 
 function renderCtExerciseList() {
   const el = document.getElementById('ct-exercise-list');
+  if (!el) return;
   if (ctExercises.length === 0) { el.innerHTML = ''; return; }
   el.innerHTML = ctExercises.map((e, i) => `
     <div class="create-ex-row">
@@ -750,7 +790,6 @@ function saveCreatedTemplate() {
   if (!name) { document.getElementById('ct-name').focus(); return; }
   const day = document.getElementById('ct-day').value.trim();
   const template = { name, day, exercises: [...ctExercises] };
-  // Save as its own plan group
   state.plans.push({ id: Date.now(), name, importedAt: Date.now(), templates: [template] });
   saveState();
   ctExercises = [];
@@ -1226,7 +1265,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // ── INIT ──
 if (!state.plans) state.plans = [];
-// Migrate legacy flat templates array to plan group
+// Migrate legacy flat templates to a plan group
 if (state.templates && state.templates.length > 0) {
   state.plans.push({ id: Date.now(), name: 'My Plan', importedAt: Date.now(), templates: state.templates });
   delete state.templates;
