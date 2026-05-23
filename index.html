@@ -976,9 +976,11 @@ function renderTonnageTrend() {
     const bars = vals.map((v, i) => {
       const h = Math.round((v / max) * 44);
       const cls = weeks[i].isCurrent ? 'current' : (v === 0 ? 'empty' : '');
+      // Label: "Now" for current, "W1"/"W2" style counting from oldest
+      const barLbl = weeks[i].isCurrent ? 'Now' : `W${i + 1}`;
       return `<div class="trend-bar-wrap">
-        <div class="trend-bar ${cls}" style="height:${Math.max(h,2)}px"></div>
-        <span class="trend-week-lbl">${weeks[i].isCurrent ? 'Now' : weeks[i].lbl.split(' ')[1] || weeks[i].lbl}</span>
+        <div class="trend-bar ${cls}" style="height:${v === 0 ? '3' : Math.max(h,4)}px"></div>
+        <span class="trend-week-lbl">${barLbl}</span>
       </div>`;
     }).join('');
 
@@ -991,7 +993,7 @@ function renderTonnageTrend() {
         else if (p < 0) rowDelta = `<span class="trend-delta-pill down">↓${Math.abs(p)}%</span>`;
       }
       return `<div class="trend-detail-row">
-        <span class="wk">${weeks[i].lbl}</span>
+        <span class="wk">${weeks[i].isCurrent ? 'This week' : weeks[i].lbl}</span>
         <div style="display:flex;align-items:center;gap:8px">
           ${rowDelta}
           <span class="${v === 0 ? 'val zero' : 'val'}">${v === 0 ? '—' : fmtTonnage(v) + ' lbs'}</span>
