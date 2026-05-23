@@ -172,6 +172,36 @@
     .weekly-delta.flat { color: var(--text2); background: var(--bg3); }
     .detail-tonnage-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; color: var(--text2); border-top: 0.5px solid var(--border); margin-top: 4px; }
     .detail-tonnage-row span:last-child { color: var(--accent); font-weight: 600; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.04em; }
+
+    /* RECORDS TABS */
+    .records-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+    .records-tab { flex: 1; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 10px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; padding: 9px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
+    .records-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* TONNAGE TREND */
+    .trend-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+    .trend-card:active { border-color: var(--border2); }
+    .trend-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+    .trend-ex-name { font-weight: 500; font-size: 15px; }
+    .trend-latest { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); letter-spacing: 0.04em; }
+    .trend-latest-lbl { font-size: 11px; color: var(--text2); text-align: right; margin-top: -2px; }
+    .trend-chart { padding: 0 16px 14px; }
+    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 48px; }
+    .trend-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .trend-bar { width: 100%; background: var(--accent-dim); border-radius: 3px 3px 0 0; transition: height 0.3s ease; min-height: 2px; }
+    .trend-bar.current { background: var(--accent); }
+    .trend-bar.empty { background: var(--bg3); opacity: 0.5; }
+    .trend-week-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+    .trend-detail { display: none; border-top: 0.5px solid var(--border); }
+    .trend-detail.open { display: block; }
+    .trend-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+    .trend-detail-row:last-child { border-bottom: none; }
+    .trend-detail-row .wk { color: var(--text2); }
+    .trend-detail-row .val { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--accent); letter-spacing: 0.04em; }
+    .trend-detail-row .val.zero { color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 13px; }
+    .trend-delta-pill { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px; }
+    .trend-delta-pill.up { color: var(--accent); background: var(--accent-dim); }
+    .trend-delta-pill.down { color: var(--red); background: var(--red-dim); }
   </style>
 </head>
 <body>
@@ -211,9 +241,17 @@
     <div class="screen" id="screen-prs">
       <div class="page-header">
         <span class="page-title">Records</span>
-        <span class="page-sub">All-time PRs</span>
       </div>
-      <div class="card"><div id="pr-list"></div></div>
+      <div class="records-tabs">
+        <button class="records-tab active" id="tab-prs" onclick="switchRecordsTab('prs')">PRs</button>
+        <button class="records-tab" id="tab-tonnage" onclick="switchRecordsTab('tonnage')">Tonnage</button>
+      </div>
+      <div id="records-prs-panel">
+        <div class="card"><div id="pr-list"></div></div>
+      </div>
+      <div id="records-tonnage-panel" style="display:none">
+        <div id="tonnage-trend-list"></div>
+      </div>
     </div>
   </main>
 
@@ -865,6 +903,121 @@ function renderPRs() {
         <div class="pr-date">${prs[k].reps ? prs[k].reps+' reps · ' : ''}${fmtDate(prs[k].date)}</div>
       </div>
     </div>`).join('');
+}
+
+// ── RECORDS TABS ──
+function switchRecordsTab(tab) {
+  document.getElementById('tab-prs').classList.toggle('active', tab === 'prs');
+  document.getElementById('tab-tonnage').classList.toggle('active', tab === 'tonnage');
+  document.getElementById('records-prs-panel').style.display = tab === 'prs' ? '' : 'none';
+  document.getElementById('records-tonnage-panel').style.display = tab === 'tonnage' ? '' : 'none';
+  if (tab === 'tonnage') renderTonnageTrend();
+}
+
+function getTonnageByExerciseByWeek(weeksBack = 6) {
+  // Build week buckets: index 0 = oldest, index weeksBack-1 = this week
+  const now = new Date();
+  const day = now.getDay();
+  const thisWeekStart = new Date(now);
+  thisWeekStart.setHours(0,0,0,0);
+  thisWeekStart.setDate(now.getDate() - day);
+
+  const weeks = [];
+  for (let i = weeksBack - 1; i >= 0; i--) {
+    const start = new Date(thisWeekStart);
+    start.setDate(thisWeekStart.getDate() - i * 7);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    // Short label: "May 5" style
+    const lbl = i === 0 ? 'This wk' : start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    weeks.push({ start: start.getTime(), end: end.getTime(), lbl, isCurrent: i === 0 });
+  }
+
+  // Accumulate tonnage per exercise per week
+  const data = {}; // { exerciseName: [ton_wk0, ton_wk1, ...] }
+  for (const w of state.workouts) {
+    const wi = weeks.findIndex(wk => w.startTime >= wk.start && w.startTime < wk.end);
+    if (wi === -1) continue;
+    for (const ex of w.exercises) {
+      const ton = calcExTonnage(ex);
+      if (ton === 0) continue;
+      if (!data[ex.name]) data[ex.name] = Array(weeksBack).fill(0);
+      data[ex.name][wi] += ton;
+    }
+  }
+  return { data, weeks };
+}
+
+function renderTonnageTrend() {
+  const list = document.getElementById('tonnage-trend-list');
+  const { data, weeks } = getTonnageByExerciseByWeek(6);
+  const exercises = Object.keys(data);
+
+  if (exercises.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">No data yet</div><p>Complete a few workouts with weights and your tonnage trends will appear here.</p></div>`;
+    return;
+  }
+
+  // Sort by most recent week tonnage desc
+  exercises.sort((a, b) => (data[b][weeks.length-1] || 0) - (data[a][weeks.length-1] || 0));
+
+  list.innerHTML = exercises.map((name, idx) => {
+    const vals = data[name];
+    const max = Math.max(...vals, 1);
+    const latest = vals[vals.length - 1];
+    const prev = vals[vals.length - 2];
+    let deltaHtml = '';
+    if (prev > 0 && latest > 0) {
+      const pct = Math.round(((latest - prev) / prev) * 100);
+      if (pct > 0) deltaHtml = `<span class="trend-delta-pill up">↑${pct}%</span>`;
+      else if (pct < 0) deltaHtml = `<span class="trend-delta-pill down">↓${Math.abs(pct)}%</span>`;
+    }
+
+    const bars = vals.map((v, i) => {
+      const h = Math.round((v / max) * 44);
+      const cls = weeks[i].isCurrent ? 'current' : (v === 0 ? 'empty' : '');
+      return `<div class="trend-bar-wrap">
+        <div class="trend-bar ${cls}" style="height:${Math.max(h,2)}px"></div>
+        <span class="trend-week-lbl">${weeks[i].isCurrent ? 'Now' : weeks[i].lbl.split(' ')[1] || weeks[i].lbl}</span>
+      </div>`;
+    }).join('');
+
+    const detailRows = vals.map((v, i) => {
+      const prevV = i > 0 ? vals[i-1] : null;
+      let rowDelta = '';
+      if (prevV !== null && prevV > 0 && v > 0) {
+        const p = Math.round(((v - prevV) / prevV) * 100);
+        if (p > 0) rowDelta = `<span class="trend-delta-pill up">↑${p}%</span>`;
+        else if (p < 0) rowDelta = `<span class="trend-delta-pill down">↓${Math.abs(p)}%</span>`;
+      }
+      return `<div class="trend-detail-row">
+        <span class="wk">${weeks[i].lbl}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${rowDelta}
+          <span class="${v === 0 ? 'val zero' : 'val'}">${v === 0 ? '—' : fmtTonnage(v) + ' lbs'}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="trend-card" onclick="toggleTrendDetail(${idx})">
+      <div class="trend-card-header">
+        <span class="trend-ex-name">${name}</span>
+        <div style="text-align:right">
+          <div style="display:flex;align-items:center;gap:6px">${deltaHtml}<span class="trend-latest">${latest > 0 ? fmtTonnage(latest) : '—'}</span></div>
+          <div class="trend-latest-lbl">${latest > 0 ? 'lbs this week' : 'no data this week'}</div>
+        </div>
+      </div>
+      <div class="trend-chart">
+        <div class="trend-bars">${bars}</div>
+      </div>
+      <div class="trend-detail" id="trend-detail-${idx}">${detailRows}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTrendDetail(idx) {
+  const el = document.getElementById(`trend-detail-${idx}`);
+  if (el) el.classList.toggle('open');
 }
 
 // ── MODALS ──
