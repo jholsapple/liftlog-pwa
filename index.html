@@ -24,6 +24,24 @@
       --radius: 14px;
       --safe-top: env(safe-area-inset-top, 0px); --safe-bot: env(safe-area-inset-bottom, 0px);
     }
+    /* ── THEMES ── */
+    [data-theme="pink"] {
+      --accent: #ff6eb4; --accent2: #e0559a; --accent-dim: rgba(255,110,180,0.12);
+    }
+    [data-theme="purple"] {
+      --accent: #b57bee; --accent2: #9b5fd4; --accent-dim: rgba(181,123,238,0.12);
+    }
+    [data-theme="blue"] {
+      --accent: #5b9cf6; --accent2: #3a7de0; --accent-dim: rgba(91,156,246,0.12);
+    }
+    [data-theme="red"] {
+      --accent: #ff6b6b; --accent2: #e05252; --accent-dim: rgba(255,107,107,0.12);
+    }
+
+    /* THEME PICKER */
+    .theme-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
+    .theme-swatch:active { transform: scale(0.9); }
+    .theme-swatch.active { border-color: var(--text); }
     html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; height: 100%; overflow: hidden; }
     #app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; overflow: hidden; }
 
@@ -153,33 +171,6 @@
     @keyframes flash { 0%, 100% { background: var(--surface); } 50% { background: var(--accent-dim); } }
     .flash { animation: flash 0.4s ease; }
 
-    /* TODAY WORKOUT CARD */
-    .today-workout-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
-    .today-workout-card:active { border-color: var(--border2); }
-    .today-workout-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-    .completed-stamp { display: flex; align-items: center; gap: 5px; background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
-    .today-workout-name { font-weight: 600; font-size: 16px; margin-bottom: 2px; }
-    .today-workout-meta { font-size: 13px; color: var(--text2); }
-    .today-suggestion-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-    .today-suggestion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-    .today-suggestion-card.rest { opacity: 0.7; }
-    .today-suggestion-left { flex: 1; }
-    .today-suggestion-plan { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
-    .today-suggestion-name { font-weight: 500; font-size: 15px; }
-    .today-suggestion-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-    .rest-badge { font-size: 11px; font-weight: 600; background: var(--bg3); color: var(--text2); border-radius: 6px; padding: 3px 8px; letter-spacing: 0.04em; }
-
-    /* PLAN GROUPS */
-    .plan-group { margin-bottom: 24px; }
-    .plan-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
-    .plan-group-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.04em; color: var(--text); }
-    .plan-group-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
-
-    /* CREATE TEMPLATE EXERCISES */
-    .create-ex-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
-    .create-ex-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .create-ex-meta { font-size: 12px; color: var(--text2); }
-
     .section-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
 
     /* TONNAGE */
@@ -249,16 +240,10 @@
     <div class="screen" id="screen-templates">
       <div class="page-header">
         <span class="page-title">Plan</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost" onclick="openModal('create-template-modal')" style="font-size:13px;padding:6px 12px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Create
-          </button>
-          <button class="btn btn-ghost" onclick="openModal('import-modal')" style="font-size:13px;padding:6px 12px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            Import
-          </button>
-        </div>
+        <button class="btn btn-ghost" onclick="openModal('import-modal')" style="font-size:13px;padding:6px 12px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Import Plan
+        </button>
       </div>
       <div id="templates-list"></div>
     </div>
@@ -284,6 +269,21 @@
       </div>
       <div id="records-tonnage-panel" style="display:none">
         <div id="tonnage-trend-list"></div>
+      </div>
+
+      <!-- Appearance -->
+      <div style="margin-top:24px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Appearance</div>
+        <div class="card" style="padding:16px 18px">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Accent color</div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <div class="theme-swatch active" id="swatch-green" style="background:#d4f564" onclick="setTheme('green')" title="Green (default)"></div>
+            <div class="theme-swatch" id="swatch-pink" style="background:#ff6eb4" onclick="setTheme('pink')" title="Pink"></div>
+            <div class="theme-swatch" id="swatch-purple" style="background:#b57bee" onclick="setTheme('purple')" title="Purple"></div>
+            <div class="theme-swatch" id="swatch-blue" style="background:#5b9cf6" onclick="setTheme('blue')" title="Blue"></div>
+            <div class="theme-swatch" id="swatch-red" style="background:#ff6b6b" onclick="setTheme('red')" title="Red"></div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -334,45 +334,11 @@
   </div>
 </div>
 
-<!-- Create Template Modal -->
-<div class="modal-overlay" id="create-template-modal">
-  <div class="modal" style="max-height:88vh;overflow-y:auto">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Create Workout</div>
-    <div class="input-group">
-      <div class="input-label">Workout Name</div>
-      <input type="text" class="text-input" id="ct-name" placeholder="e.g. Push Day, Leg Day..." autocomplete="off" />
-    </div>
-    <div class="input-group">
-      <div class="input-label">Day (optional)</div>
-      <input type="text" class="text-input" id="ct-day" placeholder="e.g. Monday, Friday..." autocomplete="off" />
-    </div>
-    <div style="margin-bottom:10px">
-      <div class="input-label" style="margin-bottom:8px">Exercises</div>
-      <div id="ct-exercise-list"></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <input type="text" class="text-input" id="ct-ex-name" placeholder="Exercise name" style="flex:2" autocomplete="off" />
-        <input type="number" class="text-input" id="ct-ex-sets" placeholder="Sets" style="flex:0.6;text-align:center" value="3" min="1" max="20" />
-        <input type="number" class="text-input" id="ct-ex-reps" placeholder="Reps" style="flex:0.6;text-align:center" value="8" min="1" max="100" />
-        <button class="btn btn-ghost" onclick="ctAddExercise()" style="padding:8px 12px;flex-shrink:0">Add</button>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('create-template-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCreatedTemplate()">Save Workout</button>
-    </div>
-  </div>
-</div>
-
 <!-- Import Plan Modal -->
 <div class="modal-overlay" id="import-modal">
   <div class="modal" style="max-height:85vh;overflow-y:auto">
     <div class="modal-handle"></div>
     <div class="modal-title">Import Plan</div>
-    <div class="input-group">
-      <div class="input-label">Plan Name</div>
-      <input type="text" class="text-input" id="import-plan-name" placeholder="e.g. 12-Week Strength" autocomplete="off" />
-    </div>
     <div class="input-group">
       <div class="input-label">Paste your workout plan</div>
       <textarea class="import-textarea" id="import-text" placeholder="Paste text from ChatGPT, Claude, or anywhere. Days like 'MONDAY – UPPER' and exercises like '• Bench Press: 4×8' will be detected automatically."></textarea>
@@ -437,7 +403,7 @@ function loadState() {
   try { const s = localStorage.getItem('liftlog_state'); return s ? JSON.parse(s) : defaultState(); }
   catch { return defaultState(); }
 }
-function defaultState() { return { activeWorkout: null, workouts: [], plans: [] }; }
+function defaultState() { return { activeWorkout: null, workouts: [], templates: [] }; }
 function saveState() { localStorage.setItem('liftlog_state', JSON.stringify(state)); }
 
 // ── SCREENS ──
@@ -473,41 +439,12 @@ function renderToday() {
   const actionsArea = document.getElementById('today-actions');
 
   if (!state.activeWorkout) {
-    const todayWorkout = getTodayCompletedWorkout();
-    if (todayWorkout) {
-      // Already worked out today — show completed card
-      statusArea.innerHTML = '';
-      const ton = calcSessionTonnage(todayWorkout);
-      const tonStr = ton > 0 ? ` · ${fmtTonnage(ton)} lbs` : '';
-      exArea.innerHTML = `<div class="today-workout-card" onclick="openCompletedDetail(${todayWorkout.id})">
-        <div class="today-workout-card-top">
-          <div>
-            <div class="today-workout-name">${todayWorkout.exercises.length} Exercise${todayWorkout.exercises.length !== 1 ? 's' : ''}</div>
-            <div class="today-workout-meta">${fmtDuration(todayWorkout.duration)}${tonStr}</div>
-          </div>
-          <div class="completed-stamp">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            Completed
-          </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${todayWorkout.exercises.slice(0,5).map(e => `<span class="pill">${e.name}</span>`).join('')}
-          ${todayWorkout.exercises.length > 5 ? `<span class="pill">+${todayWorkout.exercises.length - 5} more</span>` : ''}
-        </div>
-      </div>`;
-      actionsArea.innerHTML = `<button class="btn btn-ghost" onclick="startWorkout()" style="width:100%;justify-content:center">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Start Another Session
-      </button>`;
-    } else {
-      // No workout today — show plan suggestions or plain start
-      statusArea.innerHTML = `<div class="workout-status"><div class="status-label">Ready to train?</div><div class="status-big">Start Workout</div></div>`;
-      exArea.innerHTML = renderTodaySuggestions();
-      actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Begin Session
-      </button>`;
-    }
+    statusArea.innerHTML = `<div class="workout-status"><div class="status-label">Ready to train?</div><div class="status-big">Start Workout</div></div>`;
+    exArea.innerHTML = '';
+    actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Begin Session
+    </button>`;
   } else {
     const dur = fmtDuration(Date.now() - state.activeWorkout.startTime);
     const sessionTon = calcSessionTonnage(state.activeWorkout);
@@ -562,70 +499,18 @@ function renderExerciseBlock(ex, ei) {
     </div>`;
 }
 
-function startWorkout(planId, templateIdx) {
+function startWorkout(templateIdx) {
   let exercises = [];
-  if (planId !== undefined && templateIdx !== undefined) {
-    const plan = state.plans.find(p => p.id === planId);
-    if (plan && plan.templates[templateIdx]) {
-      exercises = plan.templates[templateIdx].exercises.map(ex => ({
-        name: ex.name,
-        sets: Array.from({ length: ex.sets }, () => ({ weight: '', reps: ex.reps || 8, done: false }))
-      }));
-    }
+  if (templateIdx !== undefined && state.templates[templateIdx]) {
+    exercises = state.templates[templateIdx].exercises.map(ex => ({
+      name: ex.name,
+      sets: Array.from({ length: ex.sets }, () => ({ weight: '', reps: ex.reps || 8, done: false }))
+    }));
   }
   state.activeWorkout = { id: Date.now(), startTime: Date.now(), exercises };
   saveState();
   showScreen('today');
   if (exercises.length === 0) setTimeout(() => openModal('add-exercise-modal'), 100);
-}
-
-function getTodayCompletedWorkout() {
-  const start = new Date(); start.setHours(0,0,0,0);
-  const end = new Date(); end.setHours(23,59,59,999);
-  return state.workouts.find(w => w.startTime >= start.getTime() && w.startTime <= end.getTime()) || null;
-}
-
-function openCompletedDetail(id) {
-  showDetail(id);
-}
-
-function todayDayName() {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function renderTodaySuggestions() {
-  if (!state.plans || state.plans.length === 0) return '';
-  const today = todayDayName().toLowerCase();
-  const dayAbbrevs = { monday:'mon', tuesday:'tue', wednesday:'wed', thursday:'thu', friday:'fri', saturday:'sat', sunday:'sun' };
-  const todayShort = dayAbbrevs[today] || today.slice(0,3);
-
-  let cards = '';
-  for (const plan of state.plans) {
-    for (let ti = 0; ti < plan.templates.length; ti++) {
-      const t = plan.templates[ti];
-      const tDay = (t.day || '').toLowerCase();
-      if (!tDay) continue;
-      if (!tDay.includes(today) && !tDay.includes(todayShort)) continue;
-      const isRest = /rest|recovery|active recovery|off/i.test(t.name);
-      const exCount = t.exercises ? t.exercises.length : 0;
-      const rightSide = isRest
-        ? `<span class="rest-badge">Rest Day</span>`
-        : `<button class="btn-start" onclick="startWorkout(${plan.id}, ${ti})">Start</button>`;
-      cards += `<div class="today-suggestion-card${isRest ? ' rest' : ''}">
-        <div class="today-suggestion-left">
-          <div class="today-suggestion-plan">${plan.name}</div>
-          <div class="today-suggestion-name">${t.name}</div>
-          <div class="today-suggestion-meta">${isRest ? 'Rest day' : exCount + ' exercises'}</div>
-        </div>
-        ${rightSide}
-      </div>`;
-    }
-  }
-  if (!cards) return '';
-  return `<div style="margin-bottom:16px">
-    <div class="today-suggestion-label">On your plan today</div>
-    ${cards}
-  </div>`;
 }
 
 function addExercise() {
@@ -693,110 +578,39 @@ function finishWorkout() {
 // ── TEMPLATES ──
 function renderTemplates() {
   const list = document.getElementById('templates-list');
-  if (!state.plans || state.plans.length === 0) {
+  if (!state.templates || state.templates.length === 0) {
     list.innerHTML = `<div class="empty">
       <div class="empty-icon">📋</div>
-      <div class="empty-title">No workouts yet</div>
-      <p>Tap <strong>Import</strong> to paste a plan from ChatGPT or Claude, or tap <strong>Create</strong> to build one manually.</p>
+      <div class="empty-title">No plan imported yet</div>
+      <p>Tap "Import Plan" above and paste your workout plan from ChatGPT, Claude, or any text.</p>
     </div>`;
     return;
   }
-  list.innerHTML = state.plans.map(plan => {
-    const templatesHtml = plan.templates.map((t, ti) => {
-      const isRest = /rest|recovery|active recovery|off/i.test(t.name);
-      const exCount = t.exercises ? t.exercises.length : 0;
-      return `<div class="template-card">
-        <div class="template-header">
-          <div>
-            <div class="template-day">${t.day || ''}</div>
-            <div class="template-name">${t.name}</div>
-            <div class="template-meta">${isRest ? 'Rest day' : exCount + ' exercises'}</div>
-          </div>
-          <div class="template-actions">
-            <button class="btn btn-icon" onclick="deleteTemplate(${plan.id}, ${ti})" style="margin-right:4px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-            </button>
-            ${isRest ? '' : `<button class="btn-start" onclick="startWorkout(${plan.id}, ${ti})">Start</button>`}
-          </div>
-        </div>
-        ${!isRest && t.exercises && t.exercises.length > 0 ? `<div style="padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px">
-          ${t.exercises.slice(0,6).map(e => `<span class="pill">${e.name}</span>`).join('')}
-          ${t.exercises.length > 6 ? `<span class="pill">+${t.exercises.length-6} more</span>` : ''}
-        </div>` : ''}
-      </div>`;
-    }).join('');
-    const importedDate = plan.importedAt ? new Date(plan.importedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-    return `<div class="plan-group">
-      <div class="plan-group-header">
+  list.innerHTML = state.templates.map((t, i) => `
+    <div class="template-card">
+      <div class="template-header">
         <div>
-          <div class="plan-group-name">${plan.name}</div>
-          ${importedDate ? `<div class="plan-group-meta">${plan.templates.length} workouts · added ${importedDate}</div>` : ''}
+          <div class="template-day">${t.day || ''}</div>
+          <div class="template-name">${t.name}</div>
+          <div class="template-meta">${t.exercises.length} exercises</div>
         </div>
-        <button class="btn btn-icon" onclick="deletePlan(${plan.id})" style="background:var(--red-dim);color:var(--red)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-        </button>
+        <div class="template-actions">
+          <button class="btn btn-icon" onclick="deleteTemplate(${i})" style="margin-right:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+          <button class="btn-start" onclick="startWorkout(${i})">Start</button>
+        </div>
       </div>
-      ${templatesHtml}
-    </div>`;
-  }).join('');
-}
-
-function deleteTemplate(planId, ti) {
-  const plan = state.plans.find(p => p.id === planId);
-  if (plan) { plan.templates.splice(ti, 1); saveState(); renderTemplates(); }
-}
-
-function deletePlan(planId) {
-  state.plans = state.plans.filter(p => p.id !== planId);
-  saveState();
-  renderTemplates();
-}
-
-// ── CREATE TEMPLATE ──
-let ctExercises = [];
-
-function ctAddExercise() {
-  const name = document.getElementById('ct-ex-name').value.trim();
-  if (!name) { document.getElementById('ct-ex-name').focus(); return; }
-  const sets = parseInt(document.getElementById('ct-ex-sets').value) || 3;
-  const reps = parseInt(document.getElementById('ct-ex-reps').value) || 8;
-  ctExercises.push({ name, sets, reps });
-  document.getElementById('ct-ex-name').value = '';
-  document.getElementById('ct-ex-name').focus();
-  renderCtExerciseList();
-}
-
-function ctRemoveExercise(i) {
-  ctExercises.splice(i, 1);
-  renderCtExerciseList();
-}
-
-function renderCtExerciseList() {
-  const el = document.getElementById('ct-exercise-list');
-  if (!el) return;
-  if (ctExercises.length === 0) { el.innerHTML = ''; return; }
-  el.innerHTML = ctExercises.map((e, i) => `
-    <div class="create-ex-row">
-      <span class="create-ex-name">${e.name}</span>
-      <span class="create-ex-meta">${e.sets}×${e.reps}</span>
-      <button class="btn btn-icon" onclick="ctRemoveExercise(${i})" style="padding:4px">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <div style="padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px">
+        ${t.exercises.slice(0,6).map(e => `<span class="pill">${e.name}</span>`).join('')}
+        ${t.exercises.length > 6 ? `<span class="pill">+${t.exercises.length-6} more</span>` : ''}
+      </div>
     </div>`).join('');
 }
 
-function saveCreatedTemplate() {
-  const name = document.getElementById('ct-name').value.trim();
-  if (!name) { document.getElementById('ct-name').focus(); return; }
-  const day = document.getElementById('ct-day').value.trim();
-  const template = { name, day, exercises: [...ctExercises] };
-  state.plans.push({ id: Date.now(), name, importedAt: Date.now(), templates: [template] });
+function deleteTemplate(i) {
+  state.templates.splice(i, 1);
   saveState();
-  ctExercises = [];
-  renderCtExerciseList();
-  document.getElementById('ct-name').value = '';
-  document.getElementById('ct-day').value = '';
-  closeModal('create-template-modal');
   renderTemplates();
 }
 
@@ -920,13 +734,11 @@ function previewImport() {
 
 function confirmImport() {
   if (!pendingImport || pendingImport.length === 0) return;
-  if (!state.plans) state.plans = [];
-  const planName = document.getElementById('import-plan-name').value.trim() || 'Imported Plan';
-  state.plans.push({ id: Date.now(), name: planName, importedAt: Date.now(), templates: pendingImport });
+  if (!state.templates) state.templates = [];
+  state.templates.push(...pendingImport);
   saveState();
   pendingImport = null;
   closeModal('import-modal');
-  document.getElementById('import-plan-name').value = '';
   document.getElementById('import-text').value = '';
   document.getElementById('import-preview-area').innerHTML = '';
   document.getElementById('import-actions').style.display = 'none';
@@ -1251,11 +1063,6 @@ function openModal(id) {
     document.getElementById('import-actions').style.display = 'none';
     document.getElementById('import-cancel-only').style.display = 'flex';
   }
-  if (id === 'create-template-modal') {
-    ctExercises = [];
-    renderCtExerciseList();
-    setTimeout(() => document.getElementById('ct-name').focus(), 150);
-  }
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
@@ -1263,14 +1070,29 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 });
 
-// ── INIT ──
-if (!state.plans) state.plans = [];
-// Migrate legacy flat templates to a plan group
-if (state.templates && state.templates.length > 0) {
-  state.plans.push({ id: Date.now(), name: 'My Plan', importedAt: Date.now(), templates: state.templates });
-  delete state.templates;
-  saveState();
+// ── THEME ──
+function setTheme(name) {
+  const root = document.documentElement;
+  if (name === 'green') {
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', name);
+  }
+  localStorage.setItem('liftlog_theme', name);
+  // Update swatch active states
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  const active = document.getElementById('swatch-' + name);
+  if (active) active.classList.add('active');
 }
+
+function loadTheme() {
+  const saved = localStorage.getItem('liftlog_theme') || 'green';
+  setTheme(saved);
+}
+
+// ── INIT ──
+if (!state.templates) state.templates = [];
+loadTheme();
 renderToday();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
