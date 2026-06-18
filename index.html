@@ -502,6 +502,7 @@ function renderToday() {
   const exArea = document.getElementById('exercises-area');
   const actionsArea = document.getElementById('today-actions');
 
+  statusArea.style.cssText = '';
   if (!state.activeWorkout) {
     const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }); // e.g. "Thursday"
     const todayIdx = (state.templates || []).findIndex(t => t.day && t.day.toLowerCase() === todayName.toLowerCase());
@@ -529,10 +530,11 @@ function renderToday() {
       </button>`;
     }
   } else {
+    statusArea.style.cssText = 'position:-webkit-sticky;position:sticky;top:0;z-index:10;background:var(--bg);margin:0 -16px;padding:0 16px 4px';
     const sessionTon = calcSessionTonnage(state.activeWorkout);
     const tonDisplay = sessionTon > 0 ? `<div class="session-tonnage" style="margin-top:10px"><span class="session-tonnage-val">${fmtTonnage(sessionTon)}</span><span class="session-tonnage-label">lbs moved</span></div>` : '';
     const running = restTimerInterval !== null;
-    statusArea.innerHTML = `<div class="rest-sticky"><div class="workout-status active-workout" style="margin-bottom:12px">
+    statusArea.innerHTML = `<div class="workout-status active-workout" style="margin-bottom:12px">
       <div class="status-label">Rest Timer</div>
       <div class="rest-timer-val" id="rest-timer-display">REST</div>
       <div class="rest-btns">
@@ -543,7 +545,7 @@ function renderToday() {
         <button class="rest-btn stop" id="rest-stop-btn" style="display:${running?'':'none'}" onclick="stopRest()">✕</button>
       </div>
       ${tonDisplay}
-    </div></div>`;
+    </div>`;
     updateRestDisplay();
     exArea.innerHTML = state.activeWorkout.exercises.map((ex, ei) => renderExerciseBlock(ex, ei)).join('');
     actionsArea.innerHTML = `
