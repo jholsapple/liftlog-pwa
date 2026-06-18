@@ -78,7 +78,8 @@
     .rest-btn:active { transform: scale(0.95); opacity: 0.8; }
     .rest-btn.sel { background: var(--accent-dim); color: var(--accent); outline: 1px solid var(--accent); }
     .rest-btn.stop { color: var(--red); background: var(--red-dim); }
-    .rest-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); margin: 0 -16px; padding: 0 16px 4px; }
+    .rest-sticky { position: -webkit-sticky; position: sticky; top: 0; z-index: 10; background: var(--bg); margin: 0 -16px; padding: 0 16px 4px; }
+    .rest-unit { font-family: 'DM Sans', sans-serif; font-size: 28px; font-weight: 300; letter-spacing: 0; }
 
     .exercise-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
     .exercise-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 0.5px solid var(--border); }
@@ -452,6 +453,7 @@ function playBeep(freq, dur, vol) {
 }
 
 function startRest(seconds) {
+  getAudioCtx(); // prime during user gesture so interval callbacks can play sound
   clearInterval(restTimerInterval);
   restSelected = seconds;
   restSecondsLeft = seconds;
@@ -484,11 +486,12 @@ function updateRestDisplay() {
   const el = document.getElementById('rest-timer-display');
   if (!el) return;
   if (restSecondsLeft <= 0) {
-    el.textContent = 'REST';
+    el.innerHTML = 'REST';
     el.style.color = '';
   } else {
-    el.textContent = restSecondsLeft + 's';
-    el.style.color = restSecondsLeft <= 5 ? 'var(--red)' : 'var(--accent)';
+    const color = restSecondsLeft <= 5 ? 'var(--red)' : 'var(--accent)';
+    el.style.color = color;
+    el.innerHTML = `${restSecondsLeft}<span class="rest-unit">s</span>`;
   }
 }
 
