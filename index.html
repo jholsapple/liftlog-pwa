@@ -72,7 +72,13 @@
     .workout-status.active-workout { border-color: var(--accent); background: var(--accent-dim); }
     .status-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
     .status-big { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.04em; color: var(--accent); }
-    .timer-display { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 0.06em; color: var(--accent); line-height: 1; }
+    .rest-timer-val { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 0.06em; color: var(--accent); line-height: 1; transition: color 0.2s; }
+    .rest-btns { display: flex; gap: 6px; margin-top: 12px; justify-content: center; }
+    .rest-btn { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; padding: 7px 0; flex: 1; cursor: pointer; transition: all 0.15s; border: none; }
+    .rest-btn:active { transform: scale(0.95); opacity: 0.8; }
+    .rest-btn.sel { background: var(--accent-dim); color: var(--accent); outline: 1px solid var(--accent); }
+    .rest-btn.stop { color: var(--red); background: var(--red-dim); }
+    .rest-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); margin: 0 -16px; padding: 0 16px 4px; }
 
     .exercise-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
     .exercise-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 0.5px solid var(--border); }
@@ -396,8 +402,11 @@
 <script>
 // ── STATE ──
 let state = loadState();
-let timerInterval = null;
 let pendingImport = null;
+let restTimerInterval = null;
+let restSecondsLeft = 0;
+let restSelected = 0;
+let audioCtx = null;
 
 function loadState() {
   try { const s = localStorage.getItem('liftlog_state'); return s ? JSON.parse(s) : defaultState(); }
@@ -422,13 +431,65 @@ function showScreen(name) {
 function fmtDate(ts) { return new Date(ts).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
 function fmtDuration(ms) { const m = Math.floor(ms / 60000); if (m < 60) return m + 'm'; return Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; }
 
-// ── TIMER ──
-function startTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const el = document.getElementById('timer-val');
-    if (el && state.activeWorkout) el.textContent = fmtDuration(Date.now() - state.activeWorkout.startTime);
+// ── REST TIMER ──
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBeep(freq, dur, vol) {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + dur);
+}
+
+function startRest(seconds) {
+  clearInterval(restTimerInterval);
+  restSelected = seconds;
+  restSecondsLeft = seconds;
+  updateRestDisplay();
+  restTimerInterval = setInterval(() => {
+    restSecondsLeft--;
+    updateRestDisplay();
+    if (restSecondsLeft > 0 && restSecondsLeft <= 5) playBeep(880, 0.1, 0.6);
+    if (restSecondsLeft === 0) { playBeep(1200, 0.4, 0.9); stopRest(true); }
   }, 1000);
+  // highlight selected btn
+  document.querySelectorAll('.rest-btn.sel').forEach(b => b.classList.remove('sel'));
+  const btns = document.querySelectorAll('.rest-btn[data-s]');
+  btns.forEach(b => { if (+b.dataset.s === seconds) b.classList.add('sel'); });
+  const stopBtn = document.getElementById('rest-stop-btn');
+  if (stopBtn) stopBtn.style.display = '';
+}
+
+function stopRest(done) {
+  clearInterval(restTimerInterval);
+  restTimerInterval = null;
+  if (!done) restSecondsLeft = 0;
+  updateRestDisplay();
+  document.querySelectorAll('.rest-btn.sel').forEach(b => b.classList.remove('sel'));
+  const stopBtn = document.getElementById('rest-stop-btn');
+  if (stopBtn) stopBtn.style.display = 'none';
+}
+
+function updateRestDisplay() {
+  const el = document.getElementById('rest-timer-display');
+  if (!el) return;
+  if (restSecondsLeft <= 0) {
+    el.textContent = 'REST';
+    el.style.color = '';
+  } else {
+    el.textContent = restSecondsLeft + 's';
+    el.style.color = restSecondsLeft <= 5 ? 'var(--red)' : 'var(--accent)';
+  }
 }
 
 // ── TODAY ──
@@ -446,11 +507,22 @@ function renderToday() {
       Begin Session
     </button>`;
   } else {
-    const dur = fmtDuration(Date.now() - state.activeWorkout.startTime);
     const sessionTon = calcSessionTonnage(state.activeWorkout);
-    const tonDisplay = sessionTon > 0 ? `<div class="session-tonnage"><span class="session-tonnage-val">${fmtTonnage(sessionTon)}</span><span class="session-tonnage-label">lbs moved</span></div>` : '';
-    statusArea.innerHTML = `<div class="workout-status active-workout"><div class="status-label">Active Workout</div><div class="timer-display" id="timer-val">${dur}</div>${tonDisplay}</div>`;
-    startTimer();
+    const tonDisplay = sessionTon > 0 ? `<div class="session-tonnage" style="margin-top:10px"><span class="session-tonnage-val">${fmtTonnage(sessionTon)}</span><span class="session-tonnage-label">lbs moved</span></div>` : '';
+    const running = restTimerInterval !== null;
+    statusArea.innerHTML = `<div class="rest-sticky"><div class="workout-status active-workout" style="margin-bottom:12px">
+      <div class="status-label">Rest Timer</div>
+      <div class="rest-timer-val" id="rest-timer-display">REST</div>
+      <div class="rest-btns">
+        <button class="rest-btn${restSelected===30&&running?' sel':''}" data-s="30" onclick="startRest(30)">30s</button>
+        <button class="rest-btn${restSelected===60&&running?' sel':''}" data-s="60" onclick="startRest(60)">60s</button>
+        <button class="rest-btn${restSelected===90&&running?' sel':''}" data-s="90" onclick="startRest(90)">90s</button>
+        <button class="rest-btn${restSelected===120&&running?' sel':''}" data-s="120" onclick="startRest(120)">2m</button>
+        <button class="rest-btn stop" id="rest-stop-btn" style="display:${running?'':'none'}" onclick="stopRest()">✕</button>
+      </div>
+      ${tonDisplay}
+    </div></div>`;
+    updateRestDisplay();
     exArea.innerHTML = state.activeWorkout.exercises.map((ex, ei) => renderExerciseBlock(ex, ei)).join('');
     actionsArea.innerHTML = `
       <button class="btn btn-ghost" onclick="openModal('add-exercise-modal')" style="width:100%;justify-content:center;margin-bottom:10px">
@@ -553,7 +625,7 @@ function toggleSet(ei, si) {
 
 function cancelWorkout() {
   state.activeWorkout = null;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  clearInterval(restTimerInterval); restTimerInterval = null; restSecondsLeft = 0; restSelected = 0;
   saveState();
   closeModal('cancel-workout-modal');
   renderToday();
@@ -569,7 +641,7 @@ function finishWorkout() {
   if (!state.activeWorkout) return;
   state.workouts.unshift({ ...state.activeWorkout, endTime: Date.now(), duration: Date.now() - state.activeWorkout.startTime });
   state.activeWorkout = null;
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  clearInterval(restTimerInterval); restTimerInterval = null; restSecondsLeft = 0; restSelected = 0;
   saveState();
   closeModal('end-workout-modal');
   renderToday();
