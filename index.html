@@ -618,12 +618,23 @@ function renderExerciseBlock(ex, ei) {
     </div>`;
 }
 
+function getLastWeights(exerciseName) {
+  const key = exerciseName.toLowerCase();
+  for (const w of state.workouts) {
+    const ex = w.exercises.find(e => e.name.toLowerCase() === key);
+    if (ex && ex.sets.some(s => s.weight)) return ex.sets;
+  }
+  return null;
+}
+
 function startWorkout(templateIdx) {
   let exercises = [];
   if (templateIdx !== undefined && state.templates[templateIdx]) {
     exercises = state.templates[templateIdx].exercises.map(ex => {
       const oneRM = getOneRM(ex.name);
+      const lastSets = getLastWeights(ex.name);
       let sets = [];
+      let setIdx = 0;
       if (ex.setGroups && ex.setGroups.length > 0) {
         for (const g of ex.setGroups) {
           for (let i = 0; i < g.sets; i++) {
@@ -631,12 +642,18 @@ function startWorkout(templateIdx) {
             if (oneRM && g.pctLow) {
               const avgPct = (g.pctLow + (g.pctHigh || g.pctLow)) / 2 / 100;
               suggested = roundTo5(oneRM * avgPct);
+            } else if (lastSets && lastSets[setIdx] && lastSets[setIdx].weight) {
+              suggested = lastSets[setIdx].weight;
             }
             sets.push({ weight: '', reps: g.reps, done: false, suggestedWeight: suggested, pctLow: g.pctLow, pctHigh: g.pctHigh });
+            setIdx++;
           }
         }
       } else {
-        sets = Array.from({ length: ex.sets }, () => ({ weight: '', reps: ex.reps || 8, done: false }));
+        sets = Array.from({ length: ex.sets }, (_, i) => {
+          const suggested = lastSets && lastSets[i] && lastSets[i].weight ? lastSets[i].weight : '';
+          return { weight: '', reps: ex.reps || 8, done: false, suggestedWeight: suggested };
+        });
       }
       return { name: ex.name, sets };
     });
@@ -869,16 +886,23 @@ function parsePlan(text) {
       if (isSessionHeader) {
         if (current && current.exercises.length > 0) days.push(current);
         const sessionName = line.replace(/:\s*$/, '').trim();
-        if (/^[A-Z\s\d]+$/.test(sessionName) && sessionName.length > 20 && !currentWeek) {
+        if (/^[A-Z\s\d]+$/.test(sessionName) && sessionName.length > 20) {
           program = titleCase(sessionName);
           current = null;
+          currentWeek = null;
           continue;
         }
         const weekPrefix = currentWeek ? `W${currentWeek}` : '';
         current = { day: weekPrefix ? weekPrefix + ' ' + titleCase(sessionName) : titleCase(sessionName), name: titleCase(sessionName), week: currentWeek, program, exercises: [] };
         continue;
       }
-      if (!current && line.length < 40 && !currentWeek) { program = titleCase(line); continue; }
+      if (line.length < 40 && !/\d+\s*[x×]\s*\d+/.test(line) && !/%/.test(line) && !/^[@\d]/.test(line)) {
+        if (current && current.exercises.length > 0) days.push(current);
+        current = null;
+        program = titleCase(line);
+        currentWeek = null;
+        continue;
+      }
       continue;
     }
 
