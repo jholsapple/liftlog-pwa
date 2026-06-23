@@ -227,6 +227,20 @@
     .trend-delta-pill { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px; }
     .trend-delta-pill.up { color: var(--accent); background: var(--accent-dim); }
     .trend-delta-pill.down { color: var(--red); background: var(--red-dim); }
+
+    /* 1RM */
+    .max-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+    .max-row:last-child { border-bottom: none; }
+    .max-name { font-size: 14px; font-weight: 500; flex: 1; }
+    .max-input { width: 80px; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 7px 10px; text-align: center; -moz-appearance: textfield; }
+    .max-input:focus { outline: none; border-color: var(--accent); }
+    .max-input::-webkit-inner-spin-button, .max-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .max-unit { font-size: 12px; color: var(--text2); margin-left: 6px; }
+    .pct-badge { font-size: 10px; color: var(--blue); background: var(--blue-dim); border-radius: 5px; padding: 2px 6px; font-weight: 600; letter-spacing: 0.02em; }
+
+    /* WEEK GROUPS */
+    .week-group-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 8px; }
+    .week-group-label:first-child { margin-top: 0; }
   </style>
 </head>
 <body>
@@ -270,12 +284,16 @@
       <div class="records-tabs">
         <button class="records-tab active" id="tab-prs" onclick="switchRecordsTab('prs')">PRs</button>
         <button class="records-tab" id="tab-tonnage" onclick="switchRecordsTab('tonnage')">Tonnage</button>
+        <button class="records-tab" id="tab-maxes" onclick="switchRecordsTab('maxes')">1RM</button>
       </div>
       <div id="records-prs-panel">
         <div class="card"><div id="pr-list"></div></div>
       </div>
       <div id="records-tonnage-panel" style="display:none">
         <div id="tonnage-trend-list"></div>
+      </div>
+      <div id="records-maxes-panel" style="display:none">
+        <div class="card" id="maxes-list"></div>
       </div>
 
       <!-- Appearance -->
@@ -575,7 +593,7 @@ function renderExerciseBlock(ex, ei) {
   const sets = ex.sets.map((set, si) => `
     <div class="set-row" id="set-${ei}-${si}">
       <span class="set-num">${si + 1}</span>
-      <input type="number" class="set-input" placeholder="lbs" value="${set.weight || ''}" onchange="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" />
+      <input type="number" class="set-input" placeholder="${set.suggestedWeight ? set.suggestedWeight + ' lbs' : 'lbs'}" value="${set.weight || ''}" onchange="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" />
       <input type="number" class="set-input" placeholder="reps" value="${set.reps || ''}" onchange="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" />
       <div class="set-done ${set.done ? 'checked' : ''}" onclick="toggleSet(${ei},${si})">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
@@ -603,10 +621,25 @@ function renderExerciseBlock(ex, ei) {
 function startWorkout(templateIdx) {
   let exercises = [];
   if (templateIdx !== undefined && state.templates[templateIdx]) {
-    exercises = state.templates[templateIdx].exercises.map(ex => ({
-      name: ex.name,
-      sets: Array.from({ length: ex.sets }, () => ({ weight: '', reps: ex.reps || 8, done: false }))
-    }));
+    exercises = state.templates[templateIdx].exercises.map(ex => {
+      const oneRM = getOneRM(ex.name);
+      let sets = [];
+      if (ex.setGroups && ex.setGroups.length > 0) {
+        for (const g of ex.setGroups) {
+          for (let i = 0; i < g.sets; i++) {
+            let suggested = '';
+            if (oneRM && g.pctLow) {
+              const avgPct = (g.pctLow + (g.pctHigh || g.pctLow)) / 2 / 100;
+              suggested = roundTo5(oneRM * avgPct);
+            }
+            sets.push({ weight: '', reps: g.reps, done: false, suggestedWeight: suggested, pctLow: g.pctLow, pctHigh: g.pctHigh });
+          }
+        }
+      } else {
+        sets = Array.from({ length: ex.sets }, () => ({ weight: '', reps: ex.reps || 8, done: false }));
+      }
+      return { name: ex.name, sets };
+    });
   }
   state.activeWorkout = { id: Date.now(), startTime: Date.now(), exercises };
   saveState();
@@ -687,13 +720,20 @@ function renderTemplates() {
     </div>`;
     return;
   }
-  list.innerHTML = state.templates.map((t, i) => `
-    <div class="template-card">
+  let html = '';
+  let lastWeekLabel = null;
+  state.templates.forEach((t, i) => {
+    const weekLabel = t.week ? (t.program ? t.program + ' — Week ' + t.week : 'Week ' + t.week) : null;
+    if (weekLabel && weekLabel !== lastWeekLabel) {
+      html += `<div class="week-group-label">${weekLabel}</div>`;
+      lastWeekLabel = weekLabel;
+    }
+    const hasPct = t.exercises.some(e => e.setGroups && e.setGroups.some(g => g.pctLow));
+    html += `<div class="template-card">
       <div class="template-header">
         <div>
-          <div class="template-day">${t.day || ''}</div>
-          <div class="template-name">${t.name}</div>
-          <div class="template-meta">${t.exercises.length} exercises</div>
+          <div class="template-day">${t.name || t.day || ''}</div>
+          <div class="template-meta">${t.exercises.length} exercises${hasPct ? ' <span class="pct-badge">%</span>' : ''}</div>
         </div>
         <div class="template-actions">
           <button class="btn btn-icon" onclick="deleteTemplate(${i})" style="margin-right:4px">
@@ -706,7 +746,9 @@ function renderTemplates() {
         ${t.exercises.slice(0,6).map(e => `<span class="pill">${e.name}</span>`).join('')}
         ${t.exercises.length > 6 ? `<span class="pill">+${t.exercises.length-6} more</span>` : ''}
       </div>
-    </div>`).join('');
+    </div>`;
+  });
+  list.innerHTML = html;
 }
 
 function deleteTemplate(i) {
@@ -716,79 +758,136 @@ function deleteTemplate(i) {
 }
 
 // ── IMPORT PARSER ──
+function titleCase(s) {
+  return s.toLowerCase().replace(/(?:^|\s|[-/(])\S/g, c => c.toUpperCase());
+}
+
+function parseSetGroup(str) {
+  let sets = 1, reps = 8, pctLow = null, pctHigh = null, rpe = null, amrap = false;
+  const setsMatch = str.match(/(\d+)\s*[x×]\s*(\d+)(?:\s*-\s*(\d+))?/i);
+  if (setsMatch) {
+    sets = parseInt(setsMatch[1]);
+    reps = parseInt(setsMatch[2]);
+  } else {
+    const amrapMatch = str.match(/(\d+)\s*[x×]?\s*AMRAP/i);
+    if (amrapMatch) { sets = parseInt(amrapMatch[1]); reps = 1; amrap = true; }
+    else if (/ONE\s*REP\s*MAX/i.test(str)) { sets = 1; reps = 1; }
+    else {
+      const plainSets = str.match(/^(\d+)\s+(\d+)\s/);
+      if (plainSets) { sets = parseInt(plainSets[1]); reps = parseInt(plainSets[2]); }
+    }
+  }
+  const pctMatch = str.match(/@?\s*(\d+(?:\.\d+)?)\s*(?:-\s*(\d+(?:\.\d+)?))?\s*%/);
+  if (pctMatch) { pctLow = parseFloat(pctMatch[1]); pctHigh = pctMatch[2] ? parseFloat(pctMatch[2]) : pctLow; }
+  const rpeMatch = str.match(/@?\s*rpe\s*(\d+(?:\.\d+)?)/i);
+  if (rpeMatch) rpe = parseFloat(rpeMatch[1]);
+  return { sets: Math.max(sets, 1), reps: Math.max(reps, 1), pctLow, pctHigh, rpe, amrap };
+}
+
+function parseExLine(raw) {
+  if (raw.length < 3) return null;
+  const skip = /^(note|rest|warm\s*up|cool|stretch|foam|mobility|cardio|zone|active|recovery)\b/i;
+
+  let cleaned = raw.replace(/\d+\s*warm\s*-?\s*up\s+sets?\s*/gi, '');
+  const parts = cleaned.split(/\.\s*then\s+|,\s*then\s+/i);
+  let name = null;
+  const setGroups = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    let part = parts[i].trim();
+    if (i === 0) {
+      const colonIdx = part.indexOf(':');
+      let namePart, setsPart;
+      if (colonIdx > 0 && !/\d+\s*[x×]\s*\d+/.test(part.substring(0, colonIdx))) {
+        namePart = part.substring(0, colonIdx).trim();
+        setsPart = part.substring(colonIdx + 1).trim();
+      } else {
+        const m = part.match(/^(.+?)\s+(\d+\s*[x×]\s*\d+.*)$/i) || part.match(/^(.+?)\s+(\d+\s+\d+\s+.*)$/);
+        if (m) { namePart = m[1]; setsPart = m[2]; }
+        else {
+          const am = part.match(/^(.+?)\s+(\d+\s*(?:[x×])?\s*AMRAP.*)$/i);
+          if (am) { namePart = am[1]; setsPart = am[2]; }
+          else {
+            const orm = part.match(/^(.+?)\s+(ONE\s*REP\s*MAX.*)$/i);
+            if (orm) { namePart = orm[1]; setsPart = orm[2]; }
+            else { namePart = part; setsPart = ''; }
+          }
+        }
+      }
+      name = namePart.replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s*\[.*?\]\s*/g, ' ').replace(/[:\s]+$/, '').trim();
+      name = name.replace(/\s+/g, ' ');
+      if (setsPart) setGroups.push(parseSetGroup(setsPart));
+    } else {
+      setGroups.push(parseSetGroup(part));
+    }
+  }
+
+  if (!name || name.length < 2) return null;
+  if (skip.test(name)) return null;
+
+  name = titleCase(name);
+  const totalSets = setGroups.reduce((s, g) => s + g.sets, 0) || 3;
+  const firstReps = setGroups.length > 0 ? setGroups[0].reps : 8;
+  return { name, setGroups: setGroups.length > 0 ? setGroups : null, sets: totalSets, reps: firstReps };
+}
+
 function parsePlan(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const days = [];
   let current = null;
+  let currentWeek = null;
+  let program = null;
 
-  // Day header pattern: all-caps words, optionally with – or - and description
-  // e.g. "MONDAY – UPPER STRENGTH" or "DAY 1 - LEGS" or "TUESDAY"
-  const dayPattern = /^(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|DAY\s*\d+)[\s–\-]*(.*)/i;
-
-  // Exercise line: bullet (•, -, *, –) followed by exercise name and optional set/rep info
-  const exPattern = /^[•\-\*–]\s*(.+)/;
+  const weekPattern = /^week\s*(\d+)\s*:?\s*(.*)/i;
+  const dayPatternOld = /^(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|DAY\s*\d+)[\s–\-]*(.*)/i;
+  const skipLine = /^(rest\s+day|two\s+rest|semi[- ]?deload|avoid\s+failure)/i;
 
   for (const line of lines) {
-    const dayMatch = line.match(dayPattern);
-    if (dayMatch) {
-      if (current) days.push(current);
-      const dayName = dayMatch[1].charAt(0).toUpperCase() + dayMatch[1].slice(1).toLowerCase();
-      const subtitle = dayMatch[2].trim();
-      current = {
-        day: dayName,
-        name: subtitle || dayName,
-        exercises: []
-      };
+    if (skipLine.test(line)) continue;
+
+    const weekMatch = line.match(weekPattern);
+    if (weekMatch) {
+      if (current && current.exercises.length > 0) days.push(current);
+      current = null;
+      currentWeek = parseInt(weekMatch[1]);
+      const note = weekMatch[2].replace(/[:\s]+$/, '').trim();
+      if (note && !program) program = note;
+      continue;
+    }
+
+    const dayMatchOld = line.match(dayPatternOld);
+    if (dayMatchOld) {
+      if (current && current.exercises.length > 0) days.push(current);
+      const dayName = dayMatchOld[1].charAt(0).toUpperCase() + dayMatchOld[1].slice(1).toLowerCase();
+      const subtitle = dayMatchOld[2].trim();
+      current = { day: dayName, name: subtitle || dayName, week: currentWeek, program, exercises: [] };
+      continue;
+    }
+
+    if (!line.startsWith('*') && !line.startsWith('•') && !line.startsWith('-') && !line.startsWith('–')) {
+      const isSessionHeader = /^[A-Za-z].*:\s*$/.test(line) || /^(Full\s+Body|Legs|Push|Pull|Upper|Lower|Bench|Squat|Deadlift)\s*\d*/i.test(line.replace(/:\s*$/, ''));
+      if (isSessionHeader) {
+        if (current && current.exercises.length > 0) days.push(current);
+        const sessionName = line.replace(/:\s*$/, '').trim();
+        if (/^[A-Z\s\d]+$/.test(sessionName) && sessionName.length > 20 && !currentWeek) {
+          program = titleCase(sessionName);
+          current = null;
+          continue;
+        }
+        const weekPrefix = currentWeek ? `W${currentWeek}` : '';
+        current = { day: weekPrefix ? weekPrefix + ' ' + titleCase(sessionName) : titleCase(sessionName), name: titleCase(sessionName), week: currentWeek, program, exercises: [] };
+        continue;
+      }
+      if (!current && line.length < 40 && !currentWeek) { program = titleCase(line); continue; }
       continue;
     }
 
     if (!current) continue;
-
-    const exMatch = line.match(exPattern);
+    const exMatch = line.match(/^[•\-\*–]\s*(.+)/);
     if (!exMatch) continue;
 
-    const raw = exMatch[1];
-    // Skip non-exercise lines (very short, cardio descriptions, etc)
-    if (raw.length < 3) continue;
-
-    // Parse exercise name and sets/reps
-    // Patterns: "Bench Press: 5×3-5" or "Bench Press: 4x8-10" or "Bench Press: 3×20"
-    const colonIdx = raw.indexOf(':');
-    let name, setsNum, repsNum;
-
-    if (colonIdx > 0) {
-      name = raw.substring(0, colonIdx).trim();
-      const setStr = raw.substring(colonIdx + 1).trim();
-      // Match NxN or N×N
-      const setMatch = setStr.match(/(\d+)\s*[x×]\s*(\d+)/i);
-      if (setMatch) {
-        setsNum = parseInt(setMatch[1]);
-        repsNum = parseInt(setMatch[2]);
-      } else {
-        // Try just a number at start
-        const numMatch = setStr.match(/^(\d+)/);
-        setsNum = numMatch ? parseInt(numMatch[1]) : 3;
-        repsNum = 8;
-      }
-    } else {
-      name = raw.trim();
-      setsNum = 3;
-      repsNum = 8;
-    }
-
-    // Clean up name — remove trailing parenthetical notes
-    name = name.replace(/\s*\(.*$/, '').trim();
-    // Skip if name looks like a note/description (contains common skip words with no exercise feel)
-    const skipWords = /^(note|rest|warm|cool|stretch|foam|mobility|cardio|zone|min|active|recovery)/i;
-    if (skipWords.test(name)) continue;
-
-    if (name.length < 2) continue;
-
-    current.exercises.push({
-      name,
-      sets: Math.min(Math.max(setsNum || 3, 1), 10),
-      reps: Math.min(Math.max(repsNum || 8, 1), 50)
-    });
+    const parsed = parseExLine(exMatch[1]);
+    if (parsed) current.exercises.push(parsed);
   }
 
   if (current && current.exercises.length > 0) days.push(current);
@@ -1041,12 +1140,67 @@ function renderPRs() {
 
 // ── RECORDS TABS ──
 function switchRecordsTab(tab) {
-  document.getElementById('tab-prs').classList.toggle('active', tab === 'prs');
-  document.getElementById('tab-tonnage').classList.toggle('active', tab === 'tonnage');
-  document.getElementById('records-prs-panel').style.display = tab === 'prs' ? '' : 'none';
-  document.getElementById('records-tonnage-panel').style.display = tab === 'tonnage' ? '' : 'none';
+  ['prs','tonnage','maxes'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', tab === t);
+    document.getElementById('records-' + t + '-panel').style.display = tab === t ? '' : 'none';
+  });
   if (tab === 'tonnage') renderTonnageTrend();
+  if (tab === 'maxes') renderMaxes();
 }
+
+function getMaxExercises() {
+  const names = new Set();
+  (state.templates || []).forEach(t => t.exercises.forEach(ex => {
+    if (ex.setGroups && ex.setGroups.some(g => g.pctLow)) names.add(ex.name);
+  }));
+  Object.keys(state.maxes || {}).forEach(n => names.add(n));
+  return [...names].sort();
+}
+
+function estimateOneRM(name) {
+  const prs = computePRs();
+  const pr = prs[name];
+  if (!pr || !pr.weight) return null;
+  const w = parseFloat(pr.weight), r = parseFloat(pr.reps) || 1;
+  if (r <= 1) return Math.round(w);
+  return Math.round(w * (1 + r / 30));
+}
+
+function renderMaxes() {
+  const list = document.getElementById('maxes-list');
+  const exercises = getMaxExercises();
+  if (!state.maxes) state.maxes = {};
+  if (exercises.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:24px 0"><div class="empty-title">No percentage-based exercises</div><p>Import a plan with percentages (e.g. "3x5 @80%") and your exercises will appear here.</p></div>`;
+    return;
+  }
+  list.innerHTML = exercises.map(name => {
+    const est = estimateOneRM(name);
+    const val = state.maxes[name] || '';
+    const hint = !val && est ? `<span style="font-size:11px;color:var(--text3)">est. ${est} lbs</span>` : '';
+    return `<div class="max-row">
+      <span class="max-name">${name}</span>
+      ${hint}
+      <input type="number" class="max-input" value="${val}" placeholder="${est || '—'}" inputmode="decimal"
+        onchange="setMax('${name.replace(/'/g,"\\'")}', this.value)" />
+      <span class="max-unit">lbs</span>
+    </div>`;
+  }).join('');
+}
+
+function setMax(name, val) {
+  if (!state.maxes) state.maxes = {};
+  if (val && parseFloat(val) > 0) state.maxes[name] = parseFloat(val);
+  else delete state.maxes[name];
+  saveState();
+}
+
+function getOneRM(name) {
+  if (state.maxes && state.maxes[name]) return state.maxes[name];
+  return estimateOneRM(name);
+}
+
+function roundTo5(n) { return Math.round(n / 5) * 5; }
 
 function getTonnageByExerciseByWeek(weeksBack = 6) {
   // Build week buckets: index 0 = oldest, index weeksBack-1 = this week
@@ -1193,6 +1347,7 @@ function loadTheme() {
 
 // ── INIT ──
 if (!state.templates) state.templates = [];
+if (!state.maxes) state.maxes = {};
 loadTheme();
 renderToday();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
