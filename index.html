@@ -805,7 +805,7 @@ function parseExLine(raw) {
   if (raw.length < 3) return null;
   const skip = /^(note|rest|warm\s*up|cool|stretch|foam|mobility|cardio|zone|active|recovery)\b/i;
 
-  let cleaned = raw.replace(/\d+\s*warm\s*-?\s*up\s+sets?\s*/gi, '');
+  let cleaned = raw.replace(/\d+\s*warm\s*-?\s*up\s+sets?\s*,?\s*/gi, '');
   const parts = cleaned.split(/\.\s*then\s+|,\s*then\s+/i);
   let name = null;
   const setGroups = [];
@@ -881,7 +881,8 @@ function parsePlan(text) {
       continue;
     }
 
-    if (!line.startsWith('*') && !line.startsWith('•') && !line.startsWith('-') && !line.startsWith('–')) {
+    const hasBullet = /^[•\-\*–]\s/.test(line);
+    if (!hasBullet) {
       const isSessionHeader = /^[A-Za-z].*:\s*$/.test(line) || /^(Full\s+Body|Legs|Push|Pull|Upper|Lower|Bench|Squat|Deadlift)\s*\d*/i.test(line.replace(/:\s*$/, ''));
       if (isSessionHeader) {
         if (current && current.exercises.length > 0) days.push(current);
@@ -896,21 +897,22 @@ function parsePlan(text) {
         current = { day: weekPrefix ? weekPrefix + ' ' + titleCase(sessionName) : titleCase(sessionName), name: titleCase(sessionName), week: currentWeek, program, exercises: [] };
         continue;
       }
-      if (line.length < 40 && !/\d+\s*[x×]\s*\d+/.test(line) && !/%/.test(line) && !/^[@\d]/.test(line)) {
-        if (current && current.exercises.length > 0) days.push(current);
-        current = null;
-        program = titleCase(line);
-        currentWeek = null;
+      const looksLikeExercise = current && (/\d+\s*[x×]\s*\d+/i.test(line) || /\d+(?:\.\d+)?\s*%/.test(line) || /AMRAP/i.test(line) || /warm\s*-?\s*up/i.test(line));
+      if (!looksLikeExercise) {
+        if (line.length < 40 && !/\d+\s*[x×]\s*\d+/.test(line) && !/%/.test(line) && !/^[@\d]/.test(line)) {
+          if (current && current.exercises.length > 0) days.push(current);
+          current = null;
+          program = titleCase(line);
+          currentWeek = null;
+        }
         continue;
       }
-      continue;
     }
 
     if (!current) continue;
-    const exMatch = line.match(/^[•\-\*–]\s*(.+)/);
-    if (!exMatch) continue;
+    const rawEx = hasBullet ? line.replace(/^[•\-\*–]\s*/, '') : line;
 
-    const parsed = parseExLine(exMatch[1]);
+    const parsed = parseExLine(rawEx);
     if (parsed) current.exercises.push(parsed);
   }
 
