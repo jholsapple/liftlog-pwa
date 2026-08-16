@@ -445,6 +445,40 @@
         display: flex;
         gap: 6px;
       }
+      .template-card:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .plan-edit-row {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+      }
+      .plan-edit-top {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 9px;
+      }
+      .plan-edit-fields {
+        display: grid;
+        grid-template-columns: 0.7fr 1fr 1fr;
+        gap: 8px;
+      }
+      .plan-edit-fields .input-label {
+        margin-bottom: 4px;
+      }
+      .plan-drag {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .plan-drag button {
+        min-width: 34px;
+        min-height: 28px;
+      }
       .btn-start {
         background: var(--accent);
         color: #0f0f0f;
@@ -1590,6 +1624,39 @@
     </div>
 
     <!-- Cancel Workout Confirm -->
+    <div class="modal-overlay" id="edit-template-modal">
+      <div class="modal" style="max-height: 92vh; overflow-y: auto">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Edit Workout</div>
+        <div class="input-group">
+          <label class="input-label" for="template-name-input"
+            >Workout name</label
+          >
+          <input class="text-input" id="template-name-input" maxlength="80" />
+        </div>
+        <div id="template-exercises-editor"></div>
+        <button
+          class="btn btn-ghost"
+          onclick="addTemplateExerciseRow()"
+          style="width: 100%; justify-content: center; margin: 4px 0 14px"
+        >
+          + Add exercise
+        </button>
+        <div class="modal-actions">
+          <button
+            class="btn btn-ghost"
+            onclick="closeModal('edit-template-modal')"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="saveTemplateEdits()">
+            Save Workout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel Workout Confirm -->
     <div class="modal-overlay confirm-overlay" id="cancel-workout-modal">
       <div class="modal confirm-modal">
         <div class="modal-handle"></div>
@@ -1663,6 +1730,7 @@
       let undoAction = null;
       let toastTimer = null;
       let modalReturnFocus = null;
+      let editingTemplateIndex = null;
 
       function loadState() {
         try {
@@ -2044,7 +2112,7 @@
     <div class="set-row" id="set-${ei}-${si}">
       <button class="set-num" onclick="removeSet(${ei},${si})" aria-label="Remove set ${si + 1}" title="Remove set" style="background:none;border:0;cursor:pointer">${si + 1}</button>
       <input type="number" class="set-input" placeholder="${set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" onchange="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" />
-      <input type="number" class="set-input" placeholder="reps" value="${set.reps || ""}" onchange="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" />
+      <input type="number" class="set-input" placeholder="${set.repTarget ? esc(set.repTarget) : "reps"}" value="${set.reps || ""}" onchange="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" aria-label="Actual reps${set.repTarget ? `, target ${esc(set.repTarget)}` : ""}" />
       <button class="set-done ${set.done ? "checked" : ""}" onclick="toggleSet(${ei},${si})" aria-label="Mark set ${si + 1} ${set.done ? "incomplete" : "complete"}" aria-pressed="${set.done}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
@@ -2111,11 +2179,17 @@
                   ) {
                     suggested = lastSets[setIdx].weight;
                   }
+                  const repLow = g.repLow || g.reps;
+                  const repHigh = g.repHigh || g.reps;
+                  const hasRange = repHigh > repLow;
                   sets.push({
                     weight: "",
-                    reps: g.reps,
+                    reps: hasRange ? "" : g.reps,
                     done: false,
                     suggestedWeight: suggested,
+                    repTarget: hasRange ? `${repLow}–${repHigh}` : "",
+                    repLow,
+                    repHigh,
                     pctLow: g.pctLow,
                     pctHigh: g.pctHigh,
                     rpe: g.rpe,
@@ -2207,6 +2281,9 @@
           weight: last.weight || "",
           reps: last.reps || 8,
           done: false,
+          repTarget: last.repTarget || "",
+          repLow: last.repLow,
+          repHigh: last.repHigh,
         });
         saveState();
         const block = document.getElementById("exblock-" + ei);
@@ -2226,6 +2303,9 @@
           reps: source.reps || 8,
           done: false,
           suggestedWeight: source.weight || source.suggestedWeight || "",
+          repTarget: source.repTarget || "",
+          repLow: source.repLow,
+          repHigh: source.repHigh,
         });
         saveState();
         renderToday();
@@ -2377,17 +2457,17 @@
           const hasPct = t.exercises.some(
             (e) => e.setGroups && e.setGroups.some((g) => g.pctLow),
           );
-          html += `<div class="template-card">
+          html += `<div class="template-card" role="button" tabindex="0" aria-label="Edit ${esc(t.name || t.day || "workout")}" onclick="openTemplateEditor(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTemplateEditor(${i})}">
       <div class="template-header">
         <div>
           <div class="template-day">${esc(t.name || t.day || "")}</div>
           <div class="template-meta">${t.exercises.length} exercises${hasPct ? ' <span class="pct-badge">%</span>' : ""}</div>
         </div>
         <div class="template-actions">
-          <button class="btn btn-icon" onclick="deleteTemplate(${i})" style="margin-right:4px">
+          <button class="btn btn-icon" onclick="event.stopPropagation();deleteTemplate(${i})" aria-label="Delete workout" style="margin-right:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           </button>
-          <button class="btn-start" onclick="startWorkout(${i})">Start</button>
+          <button class="btn-start" onclick="event.stopPropagation();startWorkout(${i})">Start</button>
         </div>
       </div>
       <div style="padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px">
@@ -2411,6 +2491,131 @@
           saveState();
           renderTemplates();
         });
+      }
+
+      function openTemplateEditor(index) {
+        const template = state.templates[index];
+        if (!template) return;
+        editingTemplateIndex = index;
+        document.getElementById("template-name-input").value =
+          template.name || template.day || "Workout";
+        renderTemplateExerciseEditor(
+          template.exercises.map((ex) => {
+            const group = ex.setGroups?.[0] || {};
+            return {
+              name: ex.name,
+              sets: ex.sets || group.sets || 3,
+              repLow: group.repLow || group.reps || ex.reps || 8,
+              repHigh: group.repHigh || group.reps || ex.reps || 8,
+              pctLow: group.pctLow,
+              pctHigh: group.pctHigh,
+              rpe: group.rpe,
+            };
+          }),
+        );
+        openModal("edit-template-modal");
+      }
+
+      function getTemplateEditorRows() {
+        return [...document.querySelectorAll(".plan-edit-row")]
+          .map((row) => ({
+            name: row.querySelector(".plan-ex-name").value.trim(),
+            sets: Math.max(
+              1,
+              Math.min(
+                20,
+                Number(row.querySelector(".plan-ex-sets").value) || 3,
+              ),
+            ),
+            repLow: Math.max(
+              1,
+              Number(row.querySelector(".plan-ex-low").value) || 8,
+            ),
+            repHigh: Math.max(
+              1,
+              Number(row.querySelector(".plan-ex-high").value) || 8,
+            ),
+            pctLow: row.dataset.pctLow ? Number(row.dataset.pctLow) : null,
+            pctHigh: row.dataset.pctHigh ? Number(row.dataset.pctHigh) : null,
+            rpe: row.dataset.rpe ? Number(row.dataset.rpe) : null,
+          }))
+          .filter((row) => row.name);
+      }
+
+      function renderTemplateExerciseEditor(rows) {
+        const area = document.getElementById("template-exercises-editor");
+        area.innerHTML = rows
+          .map(
+            (
+              row,
+              index,
+            ) => `<div class="plan-edit-row" data-pct-low="${row.pctLow || ""}" data-pct-high="${row.pctHigh || ""}" data-rpe="${row.rpe || ""}">
+          <div class="plan-edit-top"><input class="text-input plan-ex-name" value="${esc(row.name)}" aria-label="Exercise name" />
+          <div class="plan-drag"><button class="btn btn-sm" onclick="moveTemplateExerciseRow(${index},-1)" aria-label="Move exercise up" ${index === 0 ? "disabled" : ""}>↑</button><button class="btn btn-sm" onclick="moveTemplateExerciseRow(${index},1)" aria-label="Move exercise down" ${index === rows.length - 1 ? "disabled" : ""}>↓</button></div>
+          <button class="btn btn-icon" onclick="removeTemplateExerciseRow(${index})" aria-label="Remove exercise">✕</button></div>
+          <div class="plan-edit-fields"><label><span class="input-label">Sets</span><input type="number" min="1" max="20" class="text-input plan-ex-sets" value="${row.sets}" /></label><label><span class="input-label">Min reps</span><input type="number" min="1" max="100" class="text-input plan-ex-low" value="${row.repLow}" /></label><label><span class="input-label">Max reps</span><input type="number" min="1" max="100" class="text-input plan-ex-high" value="${row.repHigh}" /></label></div>
+        </div>`,
+          )
+          .join("");
+      }
+
+      function addTemplateExerciseRow() {
+        const rows = getTemplateEditorRows();
+        rows.push({ name: "New Exercise", sets: 3, repLow: 8, repHigh: 12 });
+        renderTemplateExerciseEditor(rows);
+        document
+          .querySelector(".plan-edit-row:last-child .plan-ex-name")
+          ?.select();
+      }
+      function removeTemplateExerciseRow(index) {
+        const rows = getTemplateEditorRows();
+        rows.splice(index, 1);
+        renderTemplateExerciseEditor(rows);
+      }
+      function moveTemplateExerciseRow(index, direction) {
+        const rows = getTemplateEditorRows(),
+          next = index + direction;
+        if (next < 0 || next >= rows.length) return;
+        [rows[index], rows[next]] = [rows[next], rows[index]];
+        renderTemplateExerciseEditor(rows);
+      }
+
+      function saveTemplateEdits() {
+        const template = state.templates[editingTemplateIndex];
+        if (!template) return;
+        const rows = getTemplateEditorRows();
+        if (!rows.length) {
+          showToast("Add at least one exercise");
+          return;
+        }
+        template.name =
+          document.getElementById("template-name-input").value.trim() ||
+          template.name ||
+          "Workout";
+        template.exercises = rows.map((row) => {
+          const low = Math.min(row.repLow, row.repHigh),
+            high = Math.max(row.repLow, row.repHigh);
+          return {
+            name: row.name,
+            sets: row.sets,
+            reps: low,
+            setGroups: [
+              {
+                sets: row.sets,
+                reps: low,
+                repLow: low,
+                repHigh: high,
+                pctLow: row.pctLow,
+                pctHigh: row.pctHigh,
+                rpe: row.rpe,
+              },
+            ],
+          };
+        });
+        saveState();
+        closeModal("edit-template-modal");
+        renderTemplates();
+        showToast("Workout plan saved");
       }
 
       // ── IMPORT PARSER ──

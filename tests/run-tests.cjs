@@ -69,4 +69,23 @@ assert.equal(
 );
 assert.equal(context.roundTo5(113), 115);
 
+vm.runInContext(
+  `
+  showScreen = () => {};
+  state = { preferences: { rounding: 5 }, workouts: [], maxes: {}, templates: [{ name: 'Hypertrophy', exercises: [{ name: 'Row', sets: 3, reps: 8, setGroups: [{ sets: 3, reps: 8, repLow: 8, repHigh: 12 }] }] }] };
+  startWorkout(0);
+`,
+  context,
+);
+const rangedSet = vm.runInContext(
+  "state.activeWorkout.exercises[0].sets[0]",
+  context,
+);
+assert.equal(rangedSet.repTarget, "8–12");
+assert.equal(
+  rangedSet.reps,
+  "",
+  "rep ranges should not overwrite actual completed reps",
+);
+
 console.log("LiftLog tests passed");
