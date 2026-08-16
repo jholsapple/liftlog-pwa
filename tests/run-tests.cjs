@@ -89,5 +89,10 @@ assert.equal(
 );
 assert.equal(context.formatElapsed(125000), "2:05");
 assert.equal(vm.runInContext("nextIncompleteSet().si", context), 0);
+assert.equal(vm.runInContext("tourSteps.length", context), 5);
+assert.equal(
+  vm.runInContext("TOUR_STORAGE_KEY", context),
+  "liftlog_onboarding_v1",
+);
 
 console.log("LiftLog tests passed");

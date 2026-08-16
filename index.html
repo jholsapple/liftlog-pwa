@@ -262,6 +262,95 @@
         font-size: 13px;
         margin-top: 6px;
       }
+      .today-header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .help-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text2);
+        font:
+          600 15px "DM Sans",
+          sans-serif;
+        cursor: pointer;
+      }
+      .tour-visual {
+        min-height: 148px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: linear-gradient(145deg, var(--accent-dim), var(--surface));
+        border: 1px solid var(--border);
+        margin-bottom: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+      .tour-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: #101010;
+        font-size: 34px;
+        transform: rotate(-3deg);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+      }
+      .tour-copy h2 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 28px;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+      .tour-copy p {
+        color: var(--text2);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .tour-tip {
+        background: var(--bg3);
+        border-radius: 10px;
+        color: var(--text2);
+        font-size: 12px;
+        line-height: 1.45;
+        padding: 10px 12px;
+        margin-top: 12px;
+      }
+      .tour-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin: 18px 0 14px;
+      }
+      .tour-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text3);
+      }
+      .tour-dot.active {
+        width: 18px;
+        border-radius: 4px;
+        background: var(--accent);
+      }
+      .tour-skip {
+        display: block;
+        margin: 12px auto 0;
+        background: none;
+        border: 0;
+        color: var(--text2);
+        font:
+          500 13px "DM Sans",
+          sans-serif;
+        cursor: pointer;
+        padding: 6px;
+      }
       .week-strip {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -1413,7 +1502,16 @@
         <div class="screen active" id="screen-today">
           <div class="page-header">
             <span class="page-title" id="today-title">Today</span>
-            <span class="page-sub" id="today-date"></span>
+            <div class="today-header-right">
+              <span class="page-sub" id="today-date"></span
+              ><button
+                class="help-btn"
+                onclick="startTour()"
+                aria-label="How to use LiftLog"
+              >
+                ?
+              </button>
+            </div>
           </div>
           <div id="today-overview-area"></div>
           <div id="workout-status-area"></div>
@@ -1648,6 +1746,13 @@
             ></div>
           </div>
         </div>
+        <button
+          class="btn btn-ghost"
+          onclick="startTour()"
+          style="width: 100%; justify-content: center; margin-top: 8px"
+        >
+          How to use LiftLog
+        </button>
       </main>
 
       <nav>
@@ -1690,6 +1795,31 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Add Exercise Modal -->
+    <div class="modal-overlay" id="onboarding-modal">
+      <div class="modal" style="max-width: 440px" aria-labelledby="tour-title">
+        <div id="tour-content"></div>
+        <div class="tour-dots" id="tour-dots" aria-hidden="true"></div>
+        <div class="modal-actions">
+          <button
+            class="btn btn-ghost"
+            id="tour-back"
+            onclick="previousTourStep()"
+          >
+            Back
+          </button>
+          <button
+            class="btn btn-primary"
+            id="tour-next"
+            onclick="nextTourStep()"
+          >
+            Next
+          </button>
+        </div>
+        <button class="tour-skip" onclick="finishTour()">Skip tour</button>
+      </div>
+    </div>
 
     <!-- Add Exercise Modal -->
     <div class="modal-overlay" id="add-exercise-modal">
@@ -1904,6 +2034,40 @@
       let toastTimer = null;
       let modalReturnFocus = null;
       let editingTemplateIndex = null;
+      let tourStep = 0;
+      const TOUR_STORAGE_KEY = "liftlog_onboarding_v1";
+      const tourSteps = [
+        {
+          icon: "🏋️",
+          title: "Welcome to LiftLog",
+          body: "LiftLog keeps your workout plan, live training log, history, and records together. Everything stays private on this device.",
+          tip: "Your data is local. Use Export backup in Records occasionally so you always have a copy.",
+        },
+        {
+          icon: "📋",
+          title: "Build your plan",
+          body: "Open Plan to import a program from plain text. Tap any workout card to rename it, reorder exercises, and set sets or target rep ranges.",
+          tip: "The Start button begins that workout immediately. Tap elsewhere on the card to edit it.",
+        },
+        {
+          icon: "▶",
+          title: "Start today's session",
+          body: "Today automatically surfaces a workout that matches the weekday. You can also start any workout from Plan or begin a free session.",
+          tip: "LiftLog remembers your previous weights and uses your 1RM when a plan includes percentages.",
+        },
+        {
+          icon: "✓",
+          title: "Log each working set",
+          body: "Enter the weight and actual reps, add an optional RPE, then tap the checkmark. Your next set, session progress, previous performance, and rest timer update automatically.",
+          tip: "Only checked sets count toward volume and personal records.",
+        },
+        {
+          icon: "↗",
+          title: "Learn from your training",
+          body: "History shows completed sessions and weekly volume. Records tracks PRs, exercise trends, and 1RM values. You can repeat or edit any saved workout.",
+          tip: "You’re ready. Start with Plan if you have a program, or Today for a free workout.",
+        },
+      ];
 
       function loadState() {
         try {
@@ -1982,6 +2146,44 @@
         if (undoAction) undoAction();
         document.getElementById("toast").classList.remove("show");
         undoAction = null;
+      }
+
+      function startTour() {
+        tourStep = 0;
+        renderTourStep();
+        openModal("onboarding-modal");
+      }
+      function renderTourStep() {
+        const step = tourSteps[tourStep];
+        document.getElementById("tour-content").innerHTML =
+          `<div class="tour-visual"><div class="tour-icon" aria-hidden="true">${step.icon}</div></div><div class="tour-copy"><h2 id="tour-title">${step.title}</h2><p>${step.body}</p><div class="tour-tip"><strong>Good to know:</strong> ${step.tip}</div></div>`;
+        document.getElementById("tour-dots").innerHTML = tourSteps
+          .map(
+            (_, index) =>
+              `<span class="tour-dot ${index === tourStep ? "active" : ""}"></span>`,
+          )
+          .join("");
+        const back = document.getElementById("tour-back"),
+          next = document.getElementById("tour-next");
+        back.style.visibility = tourStep === 0 ? "hidden" : "visible";
+        next.textContent =
+          tourStep === tourSteps.length - 1 ? "Start using LiftLog" : "Next";
+      }
+      function nextTourStep() {
+        if (tourStep < tourSteps.length - 1) {
+          tourStep++;
+          renderTourStep();
+        } else finishTour();
+      }
+      function previousTourStep() {
+        if (tourStep > 0) {
+          tourStep--;
+          renderTourStep();
+        }
+      }
+      function finishTour() {
+        localStorage.setItem(TOUR_STORAGE_KEY, "complete");
+        closeModal("onboarding-modal");
       }
 
       function setPreference(key, value) {
@@ -3730,6 +3932,22 @@
         });
       });
       document.addEventListener("keydown", (e) => {
+        if (
+          document
+            .getElementById("onboarding-modal")
+            ?.classList.contains("open")
+        ) {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            nextTourStep();
+            return;
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            previousTourStep();
+            return;
+          }
+        }
         if (e.key !== "Escape") return;
         const modal = document.querySelector(".modal-overlay.open");
         if (modal) closeModal(modal.id);
@@ -3774,6 +3992,7 @@
       loadTheme();
       renderToday();
       setInterval(updateTodayClock, 1000);
+      if (!localStorage.getItem(TOUR_STORAGE_KEY)) setTimeout(startTour, 350);
       if ("serviceWorker" in navigator)
         navigator.serviceWorker.register("sw.js").catch(() => {});
     </script>
