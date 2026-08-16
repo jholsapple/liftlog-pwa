@@ -1598,72 +1598,71 @@
           <div id="records-maxes-panel" style="display: none">
             <div class="card" id="maxes-list"></div>
           </div>
+        </div>
 
-          <!-- Appearance -->
-          <div style="margin-top: 24px">
-            <div
-              style="
-                font-size: 12px;
-                font-weight: 600;
-                color: var(--text2);
-                text-transform: uppercase;
-                letter-spacing: 0.06em;
-                margin-bottom: 12px;
-              "
-            >
-              Appearance
-            </div>
-            <div class="card" style="padding: 16px 18px">
-              <div
-                style="
-                  font-size: 13px;
-                  color: var(--text2);
-                  margin-bottom: 14px;
-                "
+        <!-- OPTIONS -->
+        <div class="screen" id="screen-options">
+          <div class="page-header"><span class="page-title">Options</span></div>
+          <div class="card last-insight">
+            <div class="insight-icon">✦</div>
+            <div class="insight-copy">
+              <strong>Make LiftLog yours</strong
+              ><span
+                >Choose an accent color below. It updates buttons, progress,
+                timers, and highlights throughout the app.</span
               >
-                Accent color
-              </div>
-              <div style="display: flex; gap: 14px; align-items: center">
-                <div
-                  class="theme-swatch active"
-                  id="swatch-green"
-                  style="background: #d4f564"
-                  onclick="setTheme('green')"
-                  title="Green (default)"
-                ></div>
-                <div
-                  class="theme-swatch"
-                  id="swatch-pink"
-                  style="background: #ff6eb4"
-                  onclick="setTheme('pink')"
-                  title="Pink"
-                ></div>
-                <div
-                  class="theme-swatch"
-                  id="swatch-purple"
-                  style="background: #b57bee"
-                  onclick="setTheme('purple')"
-                  title="Purple"
-                ></div>
-                <div
-                  class="theme-swatch"
-                  id="swatch-blue"
-                  style="background: #5b9cf6"
-                  onclick="setTheme('blue')"
-                  title="Blue"
-                ></div>
-                <div
-                  class="theme-swatch"
-                  id="swatch-red"
-                  style="background: #ff6b6b"
-                  onclick="setTheme('red')"
-                  title="Red"
-                ></div>
-              </div>
+            </div>
+          </div>
+          <div class="section-label">Appearance</div>
+          <div class="card" style="padding: 16px 18px">
+            <div class="setting-copy" style="margin-bottom: 14px">
+              <strong>Accent color</strong>Tap a color to apply it instantly.
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center">
+              <button
+                class="theme-swatch active"
+                id="swatch-green"
+                style="background: #d4f564"
+                onclick="setTheme('green')"
+                aria-label="Use green accent"
+                title="Green (default)"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-pink"
+                style="background: #ff6eb4"
+                onclick="setTheme('pink')"
+                aria-label="Use pink accent"
+                title="Pink"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-purple"
+                style="background: #b57bee"
+                onclick="setTheme('purple')"
+                aria-label="Use purple accent"
+                title="Purple"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-blue"
+                style="background: #5b9cf6"
+                onclick="setTheme('blue')"
+                aria-label="Use blue accent"
+                title="Blue"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-red"
+                style="background: #ff6b6b"
+                onclick="setTheme('red')"
+                aria-label="Use red accent"
+                title="Red"
+              ></button>
             </div>
           </div>
           <div style="margin-top: 18px">
-            <div class="section-label">Preferences &amp; data</div>
+            <div class="section-label">Workout preferences</div>
             <div class="card">
               <div class="setting-row">
                 <div class="setting-copy">
@@ -1744,15 +1743,12 @@
               class="setting-copy"
               style="margin-top: 10px; text-align: center"
             ></div>
+            <div class="section-label">Help</div>
+            <button class="btn btn-primary" onclick="startTour()">
+              How to use LiftLog
+            </button>
           </div>
         </div>
-        <button
-          class="btn btn-ghost"
-          onclick="startTour()"
-          style="width: 100%; justify-content: center; margin-top: 8px"
-        >
-          How to use LiftLog
-        </button>
       </main>
 
       <nav>
@@ -1790,6 +1786,15 @@
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
           Records
+        </button>
+        <button id="nav-options" onclick="showScreen('options')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"
+            />
+          </svg>
+          Options
         </button>
       </nav>
     </div>
@@ -2035,13 +2040,13 @@
       let modalReturnFocus = null;
       let editingTemplateIndex = null;
       let tourStep = 0;
-      const TOUR_STORAGE_KEY = "liftlog_onboarding_v1";
+      const TOUR_STORAGE_KEY = "liftlog_onboarding_v2";
       const tourSteps = [
         {
           icon: "🏋️",
           title: "Welcome to LiftLog",
           body: "LiftLog keeps your workout plan, live training log, history, and records together. Everything stays private on this device.",
-          tip: "Your data is local. Use Export backup in Records occasionally so you always have a copy.",
+          tip: "Your data is local. Use Export backup in Options occasionally so you always have a copy.",
         },
         {
           icon: "📋",
@@ -2065,7 +2070,13 @@
           icon: "↗",
           title: "Learn from your training",
           body: "History shows completed sessions and weekly volume. Records tracks PRs, exercise trends, and 1RM values. You can repeat or edit any saved workout.",
-          tip: "You’re ready. Start with Plan if you have a program, or Today for a free workout.",
+          tip: "Use these trends to guide the next workout—not to chase volume for its own sake.",
+        },
+        {
+          icon: "✦",
+          title: "Make it feel like yours",
+          body: "Open Options to change LiftLog’s accent color, weight unit, plate rounding, and automatic rest time. Options is also home to backups and this guide.",
+          tip: "Color changes apply instantly across buttons, timers, progress bars, and highlights.",
         },
       ];
 
@@ -2274,10 +2285,8 @@
         if (name === "today") renderToday();
         if (name === "templates") renderTemplates();
         if (name === "history") renderHistory();
-        if (name === "prs") {
-          renderPRs();
-          renderPreferences();
-        }
+        if (name === "prs") renderPRs();
+        if (name === "options") renderPreferences();
       }
 
       // ── DATE / FORMAT ──
