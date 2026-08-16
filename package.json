@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "test": "node tests/run-tests.cjs",
+    "check": "npm test && prettier --check index.html sw.js manifest.json tests/run-tests.cjs"
+  },
   "devDependencies": {
     "prettier": "^3.8.3"
   }
