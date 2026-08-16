@@ -87,5 +87,7 @@ assert.equal(
   "",
   "rep ranges should not overwrite actual completed reps",
 );
+assert.equal(context.formatElapsed(125000), "2:05");
+assert.equal(vm.runInContext("nextIncompleteSet().si", context), 0);
 
 console.log("LiftLog tests passed");

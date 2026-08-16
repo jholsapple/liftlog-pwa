@@ -248,6 +248,178 @@
         border-color: var(--accent);
         background: var(--accent-dim);
       }
+      .today-hero {
+        padding: 22px 0 16px;
+      }
+      .today-greeting {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 38px;
+        letter-spacing: 0.035em;
+        line-height: 1;
+      }
+      .today-greeting-sub {
+        color: var(--text2);
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .week-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .week-stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 11px 8px;
+        text-align: center;
+      }
+      .week-stat strong {
+        display: block;
+        color: var(--accent);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 23px;
+        letter-spacing: 0.04em;
+        line-height: 1;
+      }
+      .week-stat span {
+        display: block;
+        color: var(--text2);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.055em;
+        margin-top: 4px;
+      }
+      .today-workout-card {
+        position: relative;
+        overflow: hidden;
+        text-align: left;
+        padding: 20px;
+      }
+      .today-workout-card::after {
+        content: "";
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        right: -70px;
+        top: -80px;
+        background: var(--accent);
+        filter: blur(70px);
+        opacity: 0.13;
+        pointer-events: none;
+      }
+      .workout-kicker {
+        color: var(--accent);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+      .workout-name-large {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 32px;
+        letter-spacing: 0.04em;
+        margin: 4px 0 10px;
+      }
+      .workout-meta-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        color: var(--text2);
+        font-size: 12px;
+      }
+      .last-insight {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+      .insight-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-size: 18px;
+      }
+      .insight-copy strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+      .insight-copy span {
+        color: var(--text2);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .session-overview {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .session-progress-track {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--bg3);
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .session-progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 3px;
+        transition: width 0.25s ease;
+      }
+      .elapsed {
+        font-family: "Bebas Neue", sans-serif;
+        color: var(--accent);
+        font-size: 25px;
+        letter-spacing: 0.05em;
+        text-align: right;
+      }
+      .next-set-card {
+        background: linear-gradient(135deg, var(--accent-dim), var(--surface));
+        border: 1px solid rgba(212, 245, 100, 0.28);
+        border-radius: var(--radius);
+        padding: 15px 16px;
+        margin-bottom: 10px;
+      }
+      .next-set-label {
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+      }
+      .next-set-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin-top: 5px;
+      }
+      .next-set-name {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .next-set-target {
+        font-family: "Bebas Neue", sans-serif;
+        color: var(--accent);
+        font-size: 24px;
+        white-space: nowrap;
+        letter-spacing: 0.03em;
+      }
+      .next-set-hint {
+        color: var(--text2);
+        font-size: 12px;
+        margin-top: 5px;
+      }
       .status-label {
         font-size: 12px;
         color: var(--text2);
@@ -1240,9 +1412,10 @@
         <!-- TODAY -->
         <div class="screen active" id="screen-today">
           <div class="page-header">
-            <span class="page-title">Today</span>
+            <span class="page-title" id="today-title">Today</span>
             <span class="page-sub" id="today-date"></span>
           </div>
+          <div id="today-overview-area"></div>
           <div id="workout-status-area"></div>
           <div id="exercises-area"></div>
           <div id="today-actions"></div>
@@ -1998,8 +2171,100 @@
         }
       }
 
+      function greetingForNow() {
+        const hour = new Date().getHours();
+        return hour < 12
+          ? "Good morning"
+          : hour < 17
+            ? "Good afternoon"
+            : "Good evening";
+      }
+      function currentWeekWorkouts() {
+        const { start, end } = getWeekBounds(0);
+        return state.workouts.filter(
+          (w) => w.startTime >= start && w.startTime < end,
+        );
+      }
+      function workoutStreak() {
+        const days = new Set(
+          state.workouts.map((w) => new Date(w.startTime).toDateString()),
+        );
+        let streak = 0,
+          cursor = new Date();
+        cursor.setHours(0, 0, 0, 0);
+        if (!days.has(cursor.toDateString()))
+          cursor.setDate(cursor.getDate() - 1);
+        while (days.has(cursor.toDateString())) {
+          streak++;
+          cursor.setDate(cursor.getDate() - 1);
+        }
+        return streak;
+      }
+      function renderIdleOverview() {
+        const workouts = currentWeekWorkouts();
+        const volume = workouts.reduce(
+          (sum, workout) => sum + calcSessionTonnage(workout),
+          0,
+        );
+        document.getElementById("today-overview-area").innerHTML =
+          `<div class="week-strip">
+          <div class="week-stat"><strong>${workouts.length}</strong><span>This week</span></div>
+          <div class="week-stat"><strong>${workoutStreak()}</strong><span>Day streak</span></div>
+          <div class="week-stat"><strong>${fmtTonnage(volume)}</strong><span>${unitLabel()} moved</span></div>
+        </div>`;
+      }
+      function previousSetHint(exerciseName, setIndex) {
+        const key = exerciseName.toLowerCase();
+        for (const workout of state.workouts) {
+          const exercise = workout.exercises.find(
+            (ex) => ex.name.toLowerCase() === key,
+          );
+          const set = exercise?.sets?.[setIndex];
+          if (set?.done && (set.weight || set.reps))
+            return `Last time: ${set.weight || "—"} ${unitLabel()} × ${set.reps || "—"}`;
+        }
+        return "First logged performance for this set";
+      }
+      function nextIncompleteSet() {
+        for (let ei = 0; ei < state.activeWorkout.exercises.length; ei++) {
+          const ex = state.activeWorkout.exercises[ei];
+          const si = ex.sets.findIndex((set) => !set.done);
+          if (si !== -1) return { ex, ei, set: ex.sets[si], si };
+        }
+        return null;
+      }
+      function formatElapsed(ms) {
+        const total = Math.max(0, Math.floor(ms / 1000)),
+          minutes = Math.floor(total / 60),
+          seconds = total % 60;
+        return `${minutes}:${String(seconds).padStart(2, "0")}`;
+      }
+      function updateActiveOverview() {
+        if (!state.activeWorkout) return;
+        const allSets = state.activeWorkout.exercises.flatMap((ex) => ex.sets);
+        const done = allSets.filter((set) => set.done).length,
+          total = allSets.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const next = nextIncompleteSet();
+        const nextHtml = next
+          ? `<div class="next-set-card"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></div>`
+          : `<div class="next-set-card"><div class="next-set-label">Session complete</div><div class="next-set-name" style="margin-top:5px">Every set is checked off. Strong work.</div></div>`;
+        document.getElementById("today-overview-area").innerHTML =
+          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div></div><div><div class="elapsed" id="elapsed-time">${formatElapsed(Date.now() - state.activeWorkout.startTime)}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
+      }
+      function updateTodayClock() {
+        const el = document.getElementById("elapsed-time");
+        if (el && state.activeWorkout)
+          el.textContent = formatElapsed(
+            Date.now() - state.activeWorkout.startTime,
+          );
+      }
+
       // ── TODAY ──
       function renderToday() {
+        document.getElementById("today-title").textContent = state.activeWorkout
+          ? "Training"
+          : greetingForNow();
         document.getElementById("today-date").textContent =
           new Date().toLocaleDateString("en-US", {
             weekday: "long",
@@ -2012,6 +2277,7 @@
 
         statusArea.style.cssText = "";
         if (!state.activeWorkout) {
+          renderIdleOverview();
           const todayName = new Date().toLocaleDateString("en-US", {
             weekday: "long",
           }); // e.g. "Thursday"
@@ -2039,26 +2305,41 @@
               ? `<div style="margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`
               : "";
             const label = doneToday ? "Completed" : todayName + "'s Workout";
-            statusArea.innerHTML = `<div class="workout-status${doneToday ? "" : " active-workout"}">
-        ${checkmark}
-        <div class="status-label">${label}</div>
-        <div class="status-big">${esc(todayTemplate.name)}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">${exList}${more}</div>
+            const totalSets = todayTemplate.exercises.reduce(
+              (sum, ex) =>
+                sum +
+                (ex.sets ||
+                  ex.setGroups?.reduce((n, group) => n + group.sets, 0) ||
+                  3),
+              0,
+            );
+            const estimate = Math.max(
+              20,
+              Math.round((totalSets * 2.5) / 5) * 5,
+            );
+            statusArea.innerHTML = `<div class="workout-status today-workout-card${doneToday ? "" : " active-workout"}">
+        ${checkmark}<div class="workout-kicker">${label}</div><div class="workout-name-large">${esc(todayTemplate.name)}</div>
+        <div class="workout-meta-row"><span>${todayTemplate.exercises.length} exercises</span><span>${totalSets} working sets</span><span>~${estimate} min</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div>
       </div>`;
             exArea.innerHTML = "";
             actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout(${todayIdx})">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ${doneToday ? "Start Again" : "Begin " + todayTemplate.name}
+        ${doneToday ? "Start Again" : "Begin " + esc(todayTemplate.name)}
       </button>`;
           } else {
-            statusArea.innerHTML = `<div class="workout-status"><div class="status-label">Ready to train?</div><div class="status-big">Start Workout</div></div>`;
+            statusArea.innerHTML = `<div class="workout-status today-workout-card"><div class="workout-kicker">No workout scheduled</div><div class="workout-name-large">Move on your terms</div><div class="workout-meta-row"><span>Start a free session or choose a workout from Plan.</span></div></div>`;
             exArea.innerHTML = "";
             actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Begin Session
       </button>`;
           }
+          const last = state.workouts[0];
+          if (last)
+            exArea.innerHTML = `<div class="card last-insight"><div class="insight-icon">↗</div><div class="insight-copy"><strong>Last session: ${esc(last.name || "Workout")}</strong><span>${fmtDate(last.startTime)} · ${last.exercises.length} exercises · ${fmtTonnage(calcSessionTonnage(last))} ${unitLabel()} moved</span></div></div>`;
         } else {
+          updateActiveOverview();
           statusArea.style.cssText =
             "position:-webkit-sticky;position:sticky;top:0;z-index:10;background:var(--bg);margin:0 -16px;padding:0 16px 4px";
           const sessionTon = calcSessionTonnage(state.activeWorkout);
@@ -2339,6 +2620,7 @@
           ? parseFloat(val)
           : "";
         saveState();
+        updateActiveOverview();
       }
       function updateWorkoutNotes(value) {
         state.activeWorkout.notes = value.slice(0, 1000);
@@ -2356,6 +2638,7 @@
           .setAttribute("aria-pressed", String(set.done));
         if (set.done && state.preferences.autoRest > 0)
           startRest(state.preferences.autoRest);
+        updateActiveOverview();
       }
 
       function cancelWorkout() {
@@ -2429,6 +2712,10 @@
         saveState();
         closeModal("end-workout-modal");
         renderToday();
+        if (!editing)
+          showToast(
+            `Workout complete · ${complete} sets · ${fmtTonnage(calcSessionTonnage(saved))} ${unitLabel()}`,
+          );
       }
 
       // ── TEMPLATES ──
@@ -3486,6 +3773,7 @@
       migrateState();
       loadTheme();
       renderToday();
+      setInterval(updateTodayClock, 1000);
       if ("serviceWorker" in navigator)
         navigator.serviceWorker.register("sw.js").catch(() => {});
     </script>
