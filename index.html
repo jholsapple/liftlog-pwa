@@ -71,6 +71,31 @@
         --accent2: #e05252;
         --accent-dim: rgba(255, 107, 107, 0.12);
       }
+      [data-theme="orange"] {
+        --accent: #ff9f43;
+        --accent2: #e8862d;
+        --accent-dim: rgba(255, 159, 67, 0.12);
+      }
+      [data-theme="gold"] {
+        --accent: #ffd166;
+        --accent2: #e7b84d;
+        --accent-dim: rgba(255, 209, 102, 0.12);
+      }
+      [data-theme="teal"] {
+        --accent: #4ddbb8;
+        --accent2: #36bea0;
+        --accent-dim: rgba(77, 219, 184, 0.12);
+      }
+      [data-theme="cyan"] {
+        --accent: #58d6ff;
+        --accent2: #37bce8;
+        --accent-dim: rgba(88, 214, 255, 0.12);
+      }
+      [data-theme="mono"] {
+        --accent: #f2f2f2;
+        --accent2: #d5d5d5;
+        --accent-dim: rgba(242, 242, 242, 0.11);
+      }
 
       /* THEME PICKER */
       .theme-swatch {
@@ -1617,8 +1642,16 @@
           <div class="card" style="padding: 16px 18px">
             <div class="setting-copy" style="margin-bottom: 14px">
               <strong>Accent color</strong>Tap a color to apply it instantly.
+              <span id="current-theme-name"></span>
             </div>
-            <div style="display: flex; gap: 16px; align-items: center">
+            <div
+              style="
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
               <button
                 class="theme-swatch active"
                 id="swatch-green"
@@ -1658,6 +1691,46 @@
                 onclick="setTheme('red')"
                 aria-label="Use red accent"
                 title="Red"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-orange"
+                style="background: #ff9f43"
+                onclick="setTheme('orange')"
+                aria-label="Use orange accent"
+                title="Orange"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-gold"
+                style="background: #ffd166"
+                onclick="setTheme('gold')"
+                aria-label="Use gold accent"
+                title="Gold"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-teal"
+                style="background: #4ddbb8"
+                onclick="setTheme('teal')"
+                aria-label="Use teal accent"
+                title="Teal"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-cyan"
+                style="background: #58d6ff"
+                onclick="setTheme('cyan')"
+                aria-label="Use cyan accent"
+                title="Cyan"
+              ></button>
+              <button
+                class="theme-swatch"
+                id="swatch-mono"
+                style="background: #f2f2f2"
+                onclick="setTheme('mono')"
+                aria-label="Use monochrome accent"
+                title="Monochrome"
               ></button>
             </div>
           </div>
@@ -3987,6 +4060,9 @@
           .forEach((s) => s.classList.remove("active"));
         const active = document.getElementById("swatch-" + name);
         if (active) active.classList.add("active");
+        const label = document.getElementById("current-theme-name");
+        if (label)
+          label.textContent = `Current: ${name === "mono" ? "Monochrome" : name.charAt(0).toUpperCase() + name.slice(1)}.`;
       }
 
       function loadTheme() {
