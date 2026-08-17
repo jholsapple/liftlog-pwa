@@ -1548,25 +1548,35 @@
         <div class="screen" id="screen-templates">
           <div class="page-header">
             <span class="page-title">Plan</span>
-            <button
-              class="btn btn-ghost"
-              onclick="openModal('import-modal')"
-              style="font-size: 13px; padding: 6px 12px"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+            <div style="display: flex; gap: 6px">
+              <button
+                class="btn btn-ghost"
+                onclick="openModal('generator-modal')"
+                style="font-size: 12px; padding: 7px 10px"
               >
-                <polyline points="16 16 12 12 8 16" />
-                <line x1="12" y1="12" x2="12" y2="21" />
-                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-              </svg>
-              Import Plan
-            </button>
+                ✦ Generate</button
+              ><button
+                class="btn btn-ghost"
+                onclick="openModal('import-modal')"
+                style="font-size: 12px; padding: 7px 10px"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path
+                    d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"
+                  />
+                </svg>
+                Import Plan
+              </button>
+            </div>
           </div>
           <div id="templates-list"></div>
         </div>
@@ -1953,6 +1963,87 @@
     </div>
 
     <!-- Import Plan Modal -->
+    <div class="modal-overlay" id="generator-modal">
+      <div class="modal" style="max-height: 90vh; overflow-y: auto">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Generate a Plan</div>
+        <p class="setting-copy" style="margin-bottom: 16px">
+          Choose what fits your training. LiftLog will create an editable
+          starter plan on this device.
+        </p>
+        <div class="input-group">
+          <label class="input-label" for="generator-goal">Primary goal</label
+          ><select class="text-input" id="generator-goal" style="width: 100%">
+            <option value="general">General fitness</option>
+            <option value="muscle">Build muscle</option>
+            <option value="strength">Build strength</option>
+            <option value="powerbuilding">Powerbuilding</option>
+            <option value="conditioning">Conditioning &amp; fat loss</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="generator-equipment">Equipment</label
+          ><select
+            class="text-input"
+            id="generator-equipment"
+            style="width: 100%"
+          >
+            <option value="gym">Full gym</option>
+            <option value="dumbbells">Dumbbells &amp; bench</option>
+            <option value="bodyweight">Bodyweight only</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+          <div class="input-group">
+            <label class="input-label" for="generator-level">Experience</label
+            ><select
+              class="text-input"
+              id="generator-level"
+              style="width: 100%"
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="generator-days">Days per week</label
+            ><select class="text-input" id="generator-days" style="width: 100%">
+              <option value="2">2 days</option>
+              <option value="3" selected>3 days</option>
+              <option value="4">4 days</option>
+              <option value="5">5 days</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="generator-duration"
+            >Session length</label
+          ><select
+            class="text-input"
+            id="generator-duration"
+            style="width: 100%"
+          >
+            <option value="30">About 30 minutes</option>
+            <option value="45" selected>About 45 minutes</option>
+            <option value="60">About 60 minutes</option>
+          </select>
+        </div>
+        <div class="tour-tip" style="margin: 4px 0 16px">
+          <strong>Starting point, not a prescription:</strong> Review the
+          generated plan and adjust exercises, sets, and rep ranges for your
+          needs.
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('generator-modal')">
+            Cancel</button
+          ><button class="btn btn-primary" onclick="generateStarterPlan()">
+            Create Plan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Plan Modal -->
     <div class="modal-overlay" id="import-modal">
       <div class="modal" style="max-height: 85vh; overflow-y: auto">
         <div class="modal-handle"></div>
@@ -2124,7 +2215,7 @@
         {
           icon: "📋",
           title: "Build your plan",
-          body: "Open Plan to import a program from plain text. Tap any workout card to rename it, reorder exercises, and set sets or target rep ranges.",
+          body: "Open Plan to generate a starter program from your goals or import one from plain text. Tap any workout card to rename it, reorder exercises, and set sets or target rep ranges.",
           tip: "The Start button begins that workout immediately. Tap elsewhere on the card to edit it.",
         },
         {
@@ -3009,7 +3100,7 @@
           list.innerHTML = `<div class="empty">
       <div class="empty-icon">📋</div>
       <div class="empty-title">No plan imported yet</div>
-      <p>Tap "Import Plan" above and paste your workout plan from ChatGPT, Claude, or any text.</p>
+      <p>Generate a starter plan from your goals, or import a workout plan from ChatGPT, Claude, or any text.</p>
     </div>`;
           return;
         }
@@ -3187,6 +3278,375 @@
         closeModal("edit-template-modal");
         renderTemplates();
         showToast("Workout plan saved");
+      }
+
+      // ── PLAN GENERATOR ──
+      const generatorExercises = {
+        gym: {
+          fullA: [
+            "Back Squat",
+            "Bench Press",
+            "Cable Row",
+            "Romanian Deadlift",
+            "Lat Pulldown",
+            "Dumbbell Curl",
+          ],
+          fullB: [
+            "Deadlift",
+            "Overhead Press",
+            "Leg Press",
+            "Chest-Supported Row",
+            "Dumbbell Split Squat",
+            "Triceps Pressdown",
+          ],
+          fullC: [
+            "Front Squat",
+            "Incline Dumbbell Press",
+            "Pull-Up",
+            "Hip Thrust",
+            "Lateral Raise",
+            "Cable Crunch",
+          ],
+          upperA: [
+            "Bench Press",
+            "Cable Row",
+            "Overhead Press",
+            "Lat Pulldown",
+            "Lateral Raise",
+            "Triceps Pressdown",
+          ],
+          lowerA: [
+            "Back Squat",
+            "Romanian Deadlift",
+            "Leg Press",
+            "Leg Curl",
+            "Standing Calf Raise",
+            "Cable Crunch",
+          ],
+          upperB: [
+            "Incline Dumbbell Press",
+            "Pull-Up",
+            "Dumbbell Shoulder Press",
+            "Chest-Supported Row",
+            "Dumbbell Curl",
+            "Face Pull",
+          ],
+          lowerB: [
+            "Deadlift",
+            "Front Squat",
+            "Hip Thrust",
+            "Walking Lunge",
+            "Seated Calf Raise",
+            "Hanging Knee Raise",
+          ],
+          push: [
+            "Bench Press",
+            "Overhead Press",
+            "Incline Dumbbell Press",
+            "Lateral Raise",
+            "Triceps Pressdown",
+            "Cable Fly",
+          ],
+          pull: [
+            "Deadlift",
+            "Pull-Up",
+            "Cable Row",
+            "Lat Pulldown",
+            "Face Pull",
+            "Dumbbell Curl",
+          ],
+          legs: [
+            "Back Squat",
+            "Romanian Deadlift",
+            "Leg Press",
+            "Leg Curl",
+            "Standing Calf Raise",
+            "Cable Crunch",
+          ],
+        },
+        dumbbells: {
+          fullA: [
+            "Goblet Squat",
+            "Dumbbell Bench Press",
+            "One-Arm Dumbbell Row",
+            "Dumbbell Romanian Deadlift",
+            "Dumbbell Shoulder Press",
+            "Dumbbell Curl",
+          ],
+          fullB: [
+            "Dumbbell Split Squat",
+            "Incline Dumbbell Press",
+            "Dumbbell Deadlift",
+            "Chest-Supported Dumbbell Row",
+            "Dumbbell Lateral Raise",
+            "Dumbbell Skull Crusher",
+          ],
+          fullC: [
+            "Dumbbell Front Squat",
+            "Dumbbell Floor Press",
+            "Renegade Row",
+            "Dumbbell Hip Thrust",
+            "Dumbbell Reverse Lunge",
+            "Weighted Crunch",
+          ],
+          upperA: [
+            "Dumbbell Bench Press",
+            "One-Arm Dumbbell Row",
+            "Dumbbell Shoulder Press",
+            "Chest-Supported Dumbbell Row",
+            "Dumbbell Lateral Raise",
+            "Dumbbell Curl",
+          ],
+          lowerA: [
+            "Goblet Squat",
+            "Dumbbell Romanian Deadlift",
+            "Dumbbell Split Squat",
+            "Dumbbell Hip Thrust",
+            "Standing Calf Raise",
+            "Weighted Crunch",
+          ],
+          upperB: [
+            "Incline Dumbbell Press",
+            "Renegade Row",
+            "Arnold Press",
+            "Dumbbell Pullover",
+            "Dumbbell Skull Crusher",
+            "Hammer Curl",
+          ],
+          lowerB: [
+            "Dumbbell Deadlift",
+            "Dumbbell Front Squat",
+            "Dumbbell Reverse Lunge",
+            "Single-Leg Romanian Deadlift",
+            "Standing Calf Raise",
+            "Suitcase Carry",
+          ],
+          push: [
+            "Dumbbell Bench Press",
+            "Dumbbell Shoulder Press",
+            "Incline Dumbbell Press",
+            "Dumbbell Lateral Raise",
+            "Dumbbell Skull Crusher",
+            "Dumbbell Fly",
+          ],
+          pull: [
+            "Dumbbell Deadlift",
+            "One-Arm Dumbbell Row",
+            "Chest-Supported Dumbbell Row",
+            "Dumbbell Pullover",
+            "Reverse Fly",
+            "Hammer Curl",
+          ],
+          legs: [
+            "Goblet Squat",
+            "Dumbbell Romanian Deadlift",
+            "Dumbbell Split Squat",
+            "Dumbbell Hip Thrust",
+            "Standing Calf Raise",
+            "Weighted Crunch",
+          ],
+        },
+        bodyweight: {
+          fullA: [
+            "Bodyweight Squat",
+            "Push-Up",
+            "Inverted Row",
+            "Reverse Lunge",
+            "Pike Push-Up",
+            "Plank",
+          ],
+          fullB: [
+            "Split Squat",
+            "Incline Push-Up",
+            "Table Row",
+            "Single-Leg Glute Bridge",
+            "Calf Raise",
+            "Dead Bug",
+          ],
+          fullC: [
+            "Tempo Squat",
+            "Decline Push-Up",
+            "Chin-Up",
+            "Walking Lunge",
+            "Pike Push-Up",
+            "Side Plank",
+          ],
+          upperA: [
+            "Push-Up",
+            "Inverted Row",
+            "Pike Push-Up",
+            "Chin-Up",
+            "Bench Dip",
+            "Plank",
+          ],
+          lowerA: [
+            "Bodyweight Squat",
+            "Reverse Lunge",
+            "Single-Leg Glute Bridge",
+            "Hamstring Walkout",
+            "Calf Raise",
+            "Dead Bug",
+          ],
+          upperB: [
+            "Decline Push-Up",
+            "Chin-Up",
+            "Diamond Push-Up",
+            "Table Row",
+            "Reverse Snow Angel",
+            "Side Plank",
+          ],
+          lowerB: [
+            "Tempo Squat",
+            "Bulgarian Split Squat",
+            "Single-Leg Hip Thrust",
+            "Walking Lunge",
+            "Single-Leg Calf Raise",
+            "Hollow Hold",
+          ],
+          push: [
+            "Push-Up",
+            "Pike Push-Up",
+            "Decline Push-Up",
+            "Diamond Push-Up",
+            "Bench Dip",
+            "Plank",
+          ],
+          pull: [
+            "Chin-Up",
+            "Inverted Row",
+            "Table Row",
+            "Scapular Pull-Up",
+            "Reverse Snow Angel",
+            "Hollow Hold",
+          ],
+          legs: [
+            "Bodyweight Squat",
+            "Bulgarian Split Squat",
+            "Single-Leg Glute Bridge",
+            "Walking Lunge",
+            "Calf Raise",
+            "Dead Bug",
+          ],
+        },
+      };
+      const generatorSchedules = {
+        2: [
+          ["Full Body A", "fullA"],
+          ["Full Body B", "fullB"],
+        ],
+        3: [
+          ["Full Body A", "fullA"],
+          ["Full Body B", "fullB"],
+          ["Full Body C", "fullC"],
+        ],
+        4: [
+          ["Upper A", "upperA"],
+          ["Lower A", "lowerA"],
+          ["Upper B", "upperB"],
+          ["Lower B", "lowerB"],
+        ],
+        5: [
+          ["Push", "push"],
+          ["Pull", "pull"],
+          ["Legs", "legs"],
+          ["Upper", "upperB"],
+          ["Lower", "lowerB"],
+        ],
+      };
+      const generatorWeekdays = {
+        2: ["Monday", "Thursday"],
+        3: ["Monday", "Wednesday", "Friday"],
+        4: ["Monday", "Tuesday", "Thursday", "Friday"],
+        5: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      };
+      const generatorGoalNames = {
+        general: "General Fitness",
+        muscle: "Muscle Building",
+        strength: "Strength",
+        powerbuilding: "Powerbuilding",
+        conditioning: "Conditioning",
+      };
+
+      function generatedPrescription(goal, level, exerciseIndex) {
+        let sets = level === "beginner" ? 3 : 4,
+          repLow = 6,
+          repHigh = 10;
+        if (goal === "muscle") {
+          sets = level === "beginner" ? 3 : 4;
+          repLow = 8;
+          repHigh = 12;
+        }
+        if (goal === "strength") {
+          sets = level === "beginner" ? 3 : exerciseIndex < 2 ? 4 : 3;
+          repLow = exerciseIndex < 2 ? 4 : 6;
+          repHigh = exerciseIndex < 2 ? 6 : 8;
+        }
+        if (goal === "powerbuilding") {
+          sets = level === "beginner" ? 3 : 4;
+          repLow = exerciseIndex < 2 ? 4 : 8;
+          repHigh = exerciseIndex < 2 ? 6 : 12;
+        }
+        if (goal === "conditioning") {
+          sets = 3;
+          repLow = 12;
+          repHigh = 15;
+        }
+        return { sets, repLow, repHigh };
+      }
+
+      function buildStarterPlan({ goal, equipment, level, days, duration }) {
+        const schedule = generatorSchedules[days],
+          maxExercises = duration <= 30 ? 4 : duration <= 45 ? 5 : 6;
+        return schedule.map(([name, key], index) => {
+          const exercises = generatorExercises[equipment][key]
+            .slice(0, maxExercises)
+            .map((exerciseName, exerciseIndex) => {
+              const prescription = generatedPrescription(
+                goal,
+                level,
+                exerciseIndex,
+              );
+              return {
+                name: exerciseName,
+                sets: prescription.sets,
+                reps: prescription.repLow,
+                setGroups: [
+                  {
+                    ...prescription,
+                    reps: prescription.repLow,
+                    pctLow: null,
+                    pctHigh: null,
+                    rpe: null,
+                  },
+                ],
+              };
+            });
+          return {
+            day: generatorWeekdays[days][index],
+            name,
+            program: `${generatorGoalNames[goal]} Starter`,
+            generated: true,
+            exercises,
+          };
+        });
+      }
+
+      function generateStarterPlan() {
+        const options = {
+          goal: document.getElementById("generator-goal").value,
+          equipment: document.getElementById("generator-equipment").value,
+          level: document.getElementById("generator-level").value,
+          days: Number(document.getElementById("generator-days").value),
+          duration: Number(document.getElementById("generator-duration").value),
+        };
+        const generated = buildStarterPlan(options);
+        state.templates.push(...generated);
+        saveState();
+        closeModal("generator-modal");
+        showScreen("templates");
+        showToast(
+          `${generatorGoalNames[options.goal]} plan added · ${options.days} days/week`,
+        );
       }
 
       // ── IMPORT PARSER ──

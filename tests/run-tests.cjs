@@ -95,4 +95,14 @@ assert.equal(
   "liftlog_onboarding_v2",
 );
 
+const generatedPlan = vm.runInContext(
+  `buildStarterPlan({ goal: 'muscle', equipment: 'dumbbells', level: 'beginner', days: 3, duration: 30 })`,
+  context,
+);
+assert.equal(generatedPlan.length, 3);
+assert.equal(generatedPlan[0].day, "Monday");
+assert.equal(generatedPlan[0].exercises.length, 4);
+assert.equal(generatedPlan[0].exercises[0].setGroups[0].repHigh, 12);
+assert.equal(generatedPlan[0].generated, true);
+
 console.log("LiftLog tests passed");
