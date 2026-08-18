@@ -5,6 +5,7 @@ const vm = require("node:vm");
 const html = fs.readFileSync("index.html", "utf8");
 assert.ok(html.includes('onclick="toggleRestTimer()"'));
 assert.ok(!html.includes("Copy last"));
+assert.ok(html.includes('onclick="prepareFinishWorkout()"'));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -103,6 +104,11 @@ assert.equal(
   "",
 );
 assert.equal(context.formatElapsed(125000), "2:05");
+vm.runInContext(
+  "state.activeWorkout.startTime = 1000; state.activeWorkout.finishPausedAt = 61000; state.activeWorkout.pausedDuration = 10000",
+  context,
+);
+assert.equal(vm.runInContext("workoutElapsedMs()", context), 50000);
 assert.equal(vm.runInContext("nextIncompleteSet().si", context), 0);
 assert.equal(vm.runInContext("tourSteps.length", context), 6);
 assert.equal(

@@ -2616,6 +2616,33 @@
           seconds = total % 60;
         return `${minutes}:${String(seconds).padStart(2, "0")}`;
       }
+      function workoutElapsedMs(workout = state.activeWorkout) {
+        if (!workout) return 0;
+        if (workout.editingWorkoutId && workout.originalWorkout)
+          return workout.originalWorkout.duration || 0;
+        const end = workout.finishPausedAt || Date.now();
+        return Math.max(
+          0,
+          end - workout.startTime - (workout.pausedDuration || 0),
+        );
+      }
+      function prepareFinishWorkout() {
+        if (!state.activeWorkout) return;
+        if (!state.activeWorkout.finishPausedAt)
+          state.activeWorkout.finishPausedAt = Date.now();
+        saveState();
+        updateTodayClock();
+        openModal("end-workout-modal");
+      }
+      function resumeWorkoutClock() {
+        const workout = state.activeWorkout;
+        if (!workout?.finishPausedAt) return;
+        workout.pausedDuration =
+          (workout.pausedDuration || 0) + Date.now() - workout.finishPausedAt;
+        delete workout.finishPausedAt;
+        saveState();
+        updateTodayClock();
+      }
       function updateActiveOverview() {
         if (!state.activeWorkout) return;
         const allSets = state.activeWorkout.exercises.flatMap((ex) => ex.sets);
@@ -2627,14 +2654,12 @@
           ? `<div class="next-set-card"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></div>`
           : `<div class="next-set-card"><div class="next-set-label">Session complete</div><div class="next-set-name" style="margin-top:5px">Every set is checked off. Strong work.</div></div>`;
         document.getElementById("today-overview-area").innerHTML =
-          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div></div><div><div class="elapsed" id="elapsed-time">${formatElapsed(Date.now() - state.activeWorkout.startTime)}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
+          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div></div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
       }
       function updateTodayClock() {
         const el = document.getElementById("elapsed-time");
         if (el && state.activeWorkout)
-          el.textContent = formatElapsed(
-            Date.now() - state.activeWorkout.startTime,
-          );
+          el.textContent = formatElapsed(workoutElapsedMs());
       }
 
       // ── TODAY ──
@@ -2740,7 +2765,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Exercise
       </button>
-      <button class="btn btn-primary" onclick="openModal('end-workout-modal')" style="background:#fff;color:#0f0f0f;margin-bottom:10px">
+      <button class="btn btn-primary" onclick="prepareFinishWorkout()" style="background:#fff;color:#0f0f0f;margin-bottom:10px">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         Finish Workout
       </button>
@@ -3028,14 +3053,18 @@
         const original = state.activeWorkout.originalWorkout;
         const saved = {
           ...state.activeWorkout,
-          endTime: editing ? original.endTime : Date.now(),
+          endTime: editing
+            ? original.endTime
+            : state.activeWorkout.finishPausedAt || Date.now(),
           duration: editing
             ? original.duration
-            : Date.now() - state.activeWorkout.startTime,
+            : workoutElapsedMs(state.activeWorkout),
         };
         delete saved.editingWorkoutId;
         delete saved.originalHistoryIndex;
         delete saved.originalWorkout;
+        delete saved.finishPausedAt;
+        delete saved.pausedDuration;
         if (editing)
           state.workouts.splice(
             state.activeWorkout.originalHistoryIndex ?? 0,
@@ -4429,12 +4458,14 @@
       }
       function closeModal(id) {
         document.getElementById(id).classList.remove("open");
+        if (id === "end-workout-modal" && state.activeWorkout)
+          resumeWorkoutClock();
         if (modalReturnFocus?.focus) modalReturnFocus.focus();
       }
 
       document.querySelectorAll(".modal-overlay").forEach((overlay) => {
         overlay.addEventListener("click", (e) => {
-          if (e.target === overlay) overlay.classList.remove("open");
+          if (e.target === overlay) closeModal(overlay.id);
         });
       });
       document.addEventListener("keydown", (e) => {
