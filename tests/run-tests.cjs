@@ -87,6 +87,19 @@ assert.equal(
   "",
   "rep ranges should not overwrite actual completed reps",
 );
+vm.runInContext(
+  "updateActiveOverview = () => {}; updateSet(0, 0, 'weight', '135.5')",
+  context,
+);
+assert.equal(
+  vm.runInContext("state.activeWorkout.exercises[0].sets[0].weight", context),
+  135.5,
+);
+vm.runInContext("updateSet(0, 0, 'reps', 'not-a-number')", context);
+assert.equal(
+  vm.runInContext("state.activeWorkout.exercises[0].sets[0].reps", context),
+  "",
+);
 assert.equal(context.formatElapsed(125000), "2:05");
 assert.equal(vm.runInContext("nextIncompleteSet().si", context), 0);
 assert.equal(vm.runInContext("tourSteps.length", context), 6);

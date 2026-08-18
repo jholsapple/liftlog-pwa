@@ -650,12 +650,16 @@
         border-radius: 8px;
         color: var(--text);
         font-family: "DM Sans", sans-serif;
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 500;
         padding: 8px 10px;
         width: 100%;
+        min-height: 44px;
         text-align: center;
         -moz-appearance: textfield;
+        touch-action: manipulation;
+        -webkit-user-select: text;
+        user-select: text;
       }
       .set-input::-webkit-inner-spin-button,
       .set-input::-webkit-outer-spin-button {
@@ -2767,12 +2771,12 @@
             (set, si) => `
     <div class="set-row" id="set-${ei}-${si}">
       <button class="set-num" onclick="removeSet(${ei},${si})" aria-label="Remove set ${si + 1}" title="Remove set" style="background:none;border:0;cursor:pointer">${si + 1}</button>
-      <input type="number" class="set-input" placeholder="${set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" onchange="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" />
-      <input type="number" class="set-input" placeholder="${set.repTarget ? esc(set.repTarget) : "reps"}" value="${set.reps || ""}" onchange="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" aria-label="Actual reps${set.repTarget ? `, target ${esc(set.repTarget)}` : ""}" />
+      <input type="text" class="set-input" placeholder="${set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" oninput="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Weight for ${esc(ex.name)} set ${si + 1}" />
+      <input type="text" class="set-input" placeholder="${set.repTarget ? esc(set.repTarget) : "reps"}" value="${set.reps || ""}" oninput="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" enterkeyhint="next" autocomplete="off" aria-label="Actual reps for ${esc(ex.name)} set ${si + 1}${set.repTarget ? `, target ${esc(set.repTarget)}` : ""}" />
       <button class="set-done ${set.done ? "checked" : ""}" onclick="toggleSet(${ei},${si})" aria-label="Mark set ${si + 1} ${set.done ? "incomplete" : "complete"}" aria-pressed="${set.done}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
-      <input class="set-note" type="number" min="1" max="10" step="0.5" inputmode="decimal" aria-label="RPE for set ${si + 1}" placeholder="Optional RPE" value="${set.rpe || ""}" onchange="updateSet(${ei},${si},'rpe',this.value)" style="background:none;border:0;border-bottom:.5px solid var(--border);outline:none" />
+      <input class="set-note" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="RPE for ${esc(ex.name)} set ${si + 1}" placeholder="Optional RPE (1–10)" value="${set.rpe || ""}" oninput="updateSet(${ei},${si},'rpe',this.value)" style="background:none;border:0;border-bottom:.5px solid var(--border);outline:none;font-size:16px;min-height:36px" />
     </div>`,
           )
           .join("");
@@ -2991,9 +2995,9 @@
       }
 
       function updateSet(ei, si, field, val) {
-        state.activeWorkout.exercises[ei].sets[si][field] = val
-          ? parseFloat(val)
-          : "";
+        const parsed = String(val).trim() === "" ? "" : parseFloat(val);
+        state.activeWorkout.exercises[ei].sets[si][field] =
+          Number.isFinite(parsed) && parsed >= 0 ? parsed : "";
         saveState();
         updateActiveOverview();
       }
