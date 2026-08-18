@@ -490,6 +490,13 @@
         border-radius: 3px;
         transition: width 0.25s ease;
       }
+      .session-complete-note {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+        line-height: 1.35;
+      }
       .elapsed {
         font-family: "Bebas Neue", sans-serif;
         color: var(--accent);
@@ -553,11 +560,11 @@
         border: 0;
         background: none;
         font-family: "Bebas Neue", sans-serif;
-        font-size: 34px;
+        font-size: 41px;
         letter-spacing: 0.06em;
         color: var(--accent);
         line-height: 1;
-        min-height: 34px;
+        min-height: 41px;
         padding: 0;
         cursor: pointer;
         touch-action: manipulation;
@@ -2650,11 +2657,14 @@
           total = allSets.length;
         const pct = total ? Math.round((done / total) * 100) : 0;
         const next = nextIncompleteSet();
+        const completeMessage = !next
+          ? `<div class="session-complete-note">Every set is checked off. Strong work.</div>`
+          : "";
         const nextHtml = next
           ? `<div class="next-set-card"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></div>`
-          : `<div class="next-set-card"><div class="next-set-label">Session complete</div><div class="next-set-name" style="margin-top:5px">Every set is checked off. Strong work.</div></div>`;
+          : "";
         document.getElementById("today-overview-area").innerHTML =
-          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div></div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
+          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
       }
       function updateTodayClock() {
         const el = document.getElementById("elapsed-time");
