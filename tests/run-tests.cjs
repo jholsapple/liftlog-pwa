@@ -7,7 +7,7 @@ assert.ok(html.includes('onclick="toggleRestTimer()"'));
 assert.ok(!html.includes("Copy last"));
 assert.ok(html.includes('onclick="prepareFinishWorkout()"'));
 assert.ok(html.includes('class="session-complete-note"'));
-assert.ok(html.includes("font-size: 41px"));
+assert.ok(html.includes("font-size: 44px"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
