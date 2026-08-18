@@ -548,17 +548,29 @@
         color: var(--accent);
       }
       .rest-timer-val {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: none;
         font-family: "Bebas Neue", sans-serif;
-        font-size: 52px;
+        font-size: 34px;
         letter-spacing: 0.06em;
         color: var(--accent);
         line-height: 1;
+        min-height: 34px;
+        padding: 0;
+        cursor: pointer;
+        touch-action: manipulation;
         transition: color 0.2s;
+      }
+      .compact-rest {
+        padding: 8px 10px;
+        margin-bottom: 8px !important;
       }
       .rest-btns {
         display: flex;
         gap: 6px;
-        margin-top: 12px;
+        margin-top: 5px;
         justify-content: center;
       }
       .rest-btn {
@@ -567,9 +579,10 @@
         border-radius: 8px;
         color: var(--text2);
         font-family: "DM Sans", sans-serif;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
-        padding: 7px 0;
+        padding: 5px 0;
+        min-height: 28px;
         flex: 1;
         cursor: pointer;
         transition: all 0.15s;
@@ -599,7 +612,7 @@
       }
       .rest-unit {
         font-family: "DM Sans", sans-serif;
-        font-size: 28px;
+        font-size: 18px;
         font-weight: 300;
         letter-spacing: 0;
       }
@@ -1133,25 +1146,6 @@
         font-weight: 600;
         letter-spacing: 0.04em;
       }
-      .session-tonnage {
-        display: flex;
-        justify-content: center;
-        gap: 6px;
-        align-items: baseline;
-        margin-top: 6px;
-      }
-      .session-tonnage-val {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 22px;
-        color: var(--accent);
-        letter-spacing: 0.04em;
-      }
-      .session-tonnage-label {
-        font-size: 11px;
-        color: var(--text2);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
       .weekly-tonnage-card {
         background: var(--surface);
         border: 0.5px solid var(--border);
@@ -1431,15 +1425,6 @@
       }
       .week-group-label:first-child {
         margin-top: 0;
-      }
-      .quick-btns {
-        display: flex;
-        gap: 5px;
-        padding: 0 16px 10px 52px;
-      }
-      .quick-btns button {
-        flex: 1;
-        min-height: 34px;
       }
       .set-note {
         grid-column: 2 / 4;
@@ -2524,6 +2509,14 @@
         if (stopBtn) stopBtn.style.display = "";
       }
 
+      function toggleRestTimer() {
+        if (restTimerInterval !== null) {
+          stopRest();
+          return;
+        }
+        startRest(restSelected || state.preferences.autoRest || 90);
+      }
+
       function stopRest(done) {
         clearInterval(restTimerInterval);
         restTimerInterval = null;
@@ -2543,10 +2536,15 @@
         if (restSecondsLeft <= 0) {
           el.innerHTML = "REST";
           el.style.color = "";
+          el.setAttribute("aria-label", "Start rest timer");
         } else {
           const color = restSecondsLeft <= 5 ? "var(--red)" : "var(--accent)";
           el.style.color = color;
           el.innerHTML = `${restSecondsLeft}<span class="rest-unit">s</span>`;
+          el.setAttribute(
+            "aria-label",
+            `Stop rest timer, ${restSecondsLeft} seconds remaining`,
+          );
         }
       }
 
@@ -2721,15 +2719,9 @@
           updateActiveOverview();
           statusArea.style.cssText =
             "position:-webkit-sticky;position:sticky;top:0;z-index:10;background:var(--bg);margin:0 -16px;padding:0 16px 4px";
-          const sessionTon = calcSessionTonnage(state.activeWorkout);
-          const tonDisplay =
-            sessionTon > 0
-              ? `<div class="session-tonnage" style="margin-top:10px"><span class="session-tonnage-val">${fmtTonnage(sessionTon)}</span><span class="session-tonnage-label">${unitLabel()} moved</span></div>`
-              : "";
           const running = restTimerInterval !== null;
-          statusArea.innerHTML = `<div class="workout-status active-workout" style="margin-bottom:12px">
-      <div class="status-label">Rest Timer</div>
-      <div class="rest-timer-val" id="rest-timer-display">REST</div>
+          statusArea.innerHTML = `<div class="workout-status active-workout compact-rest">
+      <button class="rest-timer-val" id="rest-timer-display" onclick="toggleRestTimer()" aria-label="${running ? "Stop rest timer" : "Start rest timer"}">REST</button>
       <div class="rest-btns">
         <button class="rest-btn${restSelected === 30 && running ? " sel" : ""}" data-s="30" onclick="startRest(30)">30s</button>
         <button class="rest-btn${restSelected === 60 && running ? " sel" : ""}" data-s="60" onclick="startRest(60)">60s</button>
@@ -2737,7 +2729,6 @@
         <button class="rest-btn${restSelected === 120 && running ? " sel" : ""}" data-s="120" onclick="startRest(120)">2m</button>
         <button class="rest-btn stop" id="rest-stop-btn" style="display:${running ? "" : "none"}" onclick="stopRest()">✕</button>
       </div>
-      ${tonDisplay}
     </div>`;
           updateRestDisplay();
           exArea.innerHTML = state.activeWorkout.exercises
@@ -2797,7 +2788,6 @@
         <span></span><span style="text-align:center">${unitLabel()}</span><span style="text-align:center">reps</span><span></span>
       </div>
       ${sets}
-      <div class="quick-btns"><button class="btn btn-sm" onclick="adjustLastWeight(${ei},-${state.preferences.rounding})">−${state.preferences.rounding}</button><button class="btn btn-sm" onclick="copyPreviousSet(${ei})">Copy last</button><button class="btn btn-sm" onclick="adjustLastWeight(${ei},${state.preferences.rounding})">+${state.preferences.rounding}</button></div>
       <div class="add-set-row"><button class="btn btn-sm" onclick="addSet(${ei})">+ Add Set</button></div>
     </div>`;
       }
@@ -2952,36 +2942,6 @@
         renderToday();
       }
 
-      function copyPreviousSet(ei) {
-        const sets = state.activeWorkout.exercises[ei].sets;
-        if (!sets.length) return;
-        const source =
-          [...sets].reverse().find((s) => s.done || s.weight) ||
-          sets[sets.length - 1];
-        sets.push({
-          weight: source.weight || "",
-          reps: source.reps || 8,
-          done: false,
-          suggestedWeight: source.weight || source.suggestedWeight || "",
-          repTarget: source.repTarget || "",
-          repLow: source.repLow,
-          repHigh: source.repHigh,
-        });
-        saveState();
-        renderToday();
-      }
-      function adjustLastWeight(ei, delta) {
-        const sets = state.activeWorkout.exercises[ei].sets;
-        const set =
-          [...sets].reverse().find((s) => !s.done) || sets[sets.length - 1];
-        if (!set) return;
-        set.weight = Math.max(
-          0,
-          (parseFloat(set.weight || set.suggestedWeight) || 0) + delta,
-        );
-        saveState();
-        renderToday();
-      }
       function removeSet(ei, si) {
         const sets = state.activeWorkout.exercises[ei].sets;
         const removed = sets.splice(si, 1)[0];

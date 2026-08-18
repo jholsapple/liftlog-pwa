@@ -3,6 +3,8 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const html = fs.readFileSync("index.html", "utf8");
+assert.ok(html.includes('onclick="toggleRestTimer()"'));
+assert.ok(!html.includes("Copy last"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
