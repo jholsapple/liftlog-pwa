@@ -128,4 +128,22 @@ assert.equal(generatedPlan[0].exercises.length, 4);
 assert.equal(generatedPlan[0].exercises[0].setGroups[0].repHigh, 12);
 assert.equal(generatedPlan[0].generated, true);
 
+const now = Date.now();
+vm.runInContext(
+  `state.workouts = [
+    { id: 10, name: 'Scheduled Workout', startTime: ${now - 5000}, endTime: ${now - 4000}, exercises: [] },
+    { id: 11, name: 'Actual Unscheduled Workout', startTime: ${now - 3000}, endTime: ${now - 1000}, exercises: [] },
+    { id: 9, name: 'Older Workout', startTime: ${now - 86400000}, endTime: ${now - 86300000}, exercises: [] }
+  ]`,
+  context,
+);
+assert.equal(
+  vm.runInContext("latestCompletedWorkoutToday().name", context),
+  "Actual Unscheduled Workout",
+);
+assert.equal(
+  vm.runInContext("latestSavedWorkout().name", context),
+  "Actual Unscheduled Workout",
+);
+
 console.log("LiftLog tests passed");

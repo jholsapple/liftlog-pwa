@@ -2671,6 +2671,33 @@
         if (el && state.activeWorkout)
           el.textContent = formatElapsed(workoutElapsedMs());
       }
+      function workoutCompletedAt(workout) {
+        return workout.endTime || workout.startTime;
+      }
+      function latestCompletedWorkoutToday() {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        return (
+          [...state.workouts]
+            .filter((workout) => {
+              const completedAt = workoutCompletedAt(workout);
+              return (
+                completedAt >= start.getTime() && completedAt < end.getTime()
+              );
+            })
+            .sort((a, b) => workoutCompletedAt(b) - workoutCompletedAt(a))[0] ||
+          null
+        );
+      }
+      function latestSavedWorkout() {
+        return (
+          [...state.workouts].sort(
+            (a, b) => workoutCompletedAt(b) - workoutCompletedAt(a),
+          )[0] || null
+        );
+      }
 
       // ── TODAY ──
       function renderToday() {
@@ -2698,13 +2725,33 @@
           );
           const todayTemplate =
             todayIdx !== -1 ? state.templates[todayIdx] : null;
+          const completedToday = latestCompletedWorkoutToday();
 
-          if (todayTemplate) {
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-            const doneToday = state.workouts.some(
-              (w) => w.startTime >= todayStart.getTime(),
+          if (completedToday) {
+            const exList = completedToday.exercises
+              .slice(0, 6)
+              .map((e) => `<span class="pill">${esc(e.name)}</span>`)
+              .join("");
+            const more =
+              completedToday.exercises.length > 6
+                ? `<span class="pill">+${completedToday.exercises.length - 6} more</span>`
+                : "";
+            const completeSets = completedToday.exercises.reduce(
+              (sum, exercise) =>
+                sum + exercise.sets.filter((set) => set.done).length,
+              0,
             );
+            statusArea.innerHTML = `<div class="workout-status today-workout-card">
+        <div style="margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div class="workout-kicker">Completed</div><div class="workout-name-large">${esc(completedToday.name || "Workout")}</div>
+        <div class="workout-meta-row"><span>${completedToday.exercises.length} exercises</span><span>${completeSets} completed sets</span><span>${fmtDuration(completedToday.duration || 0)}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div>
+      </div>`;
+            exArea.innerHTML = "";
+            actionsArea.innerHTML = `<button class="btn btn-primary" onclick="repeatWorkout(${completedToday.id})">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Repeat ${esc(completedToday.name || "Workout")}
+      </button>`;
+          } else if (todayTemplate) {
             const exList = todayTemplate.exercises
               .slice(0, 6)
               .map((e) => `<span class="pill">${esc(e.name)}</span>`)
@@ -2713,10 +2760,6 @@
               todayTemplate.exercises.length > 6
                 ? `<span class="pill">+${todayTemplate.exercises.length - 6} more</span>`
                 : "";
-            const checkmark = doneToday
-              ? `<div style="margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`
-              : "";
-            const label = doneToday ? "Completed" : todayName + "'s Workout";
             const totalSets = todayTemplate.exercises.reduce(
               (sum, ex) =>
                 sum +
@@ -2729,16 +2772,9 @@
               20,
               Math.round((totalSets * 2.5) / 5) * 5,
             );
-            statusArea.innerHTML = `<div class="workout-status today-workout-card${doneToday ? "" : " active-workout"}">
-        ${checkmark}<div class="workout-kicker">${label}</div><div class="workout-name-large">${esc(todayTemplate.name)}</div>
-        <div class="workout-meta-row"><span>${todayTemplate.exercises.length} exercises</span><span>${totalSets} working sets</span><span>~${estimate} min</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div>
-      </div>`;
+            statusArea.innerHTML = `<div class="workout-status today-workout-card active-workout"><div class="workout-kicker">${todayName}'s Workout</div><div class="workout-name-large">${esc(todayTemplate.name)}</div><div class="workout-meta-row"><span>${todayTemplate.exercises.length} exercises</span><span>${totalSets} working sets</span><span>~${estimate} min</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div></div>`;
             exArea.innerHTML = "";
-            actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout(${todayIdx})">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ${doneToday ? "Start Again" : "Begin " + esc(todayTemplate.name)}
-      </button>`;
+            actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout(${todayIdx})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Begin ${esc(todayTemplate.name)}</button>`;
           } else {
             statusArea.innerHTML = `<div class="workout-status today-workout-card"><div class="workout-kicker">No workout scheduled</div><div class="workout-name-large">Move on your terms</div><div class="workout-meta-row"><span>Start a free session or choose a workout from Plan.</span></div></div>`;
             exArea.innerHTML = "";
@@ -2747,8 +2783,10 @@
         Begin Session
       </button>`;
           }
-          const last = state.workouts[0];
-          if (last)
+          const last = latestSavedWorkout();
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          if (last && workoutCompletedAt(last) < todayStart.getTime())
             exArea.innerHTML = `<div class="card last-insight"><div class="insight-icon">↗</div><div class="insight-copy"><strong>Last session: ${esc(last.name || "Workout")}</strong><span>${fmtDate(last.startTime)} · ${last.exercises.length} exercises · ${fmtTonnage(calcSessionTonnage(last))} ${unitLabel()} moved</span></div></div>`;
         } else {
           updateActiveOverview();
