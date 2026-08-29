@@ -11,6 +11,8 @@ assert.ok(!html.includes("Copy last"));
 assert.ok(html.includes('onclick="prepareFinishWorkout()"'));
 assert.ok(html.includes('class="session-complete-note"'));
 assert.ok(html.includes("font-size: 44px"));
+assert.ok(html.includes('onclick="scrollToNextSet()"'));
+assert.ok(!html.includes("Optional RPE"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -94,6 +96,25 @@ assert.equal(
   rangedSet.reps,
   "",
   "rep ranges should not overwrite actual completed reps",
+);
+assert.equal(
+  typeof vm.runInContext("state.activeWorkout.startTime", context),
+  "number",
+);
+vm.runInContext("state.templates = []; startWorkout()", context);
+assert.equal(vm.runInContext("state.activeWorkout.startTime", context), null);
+assert.equal(vm.runInContext("workoutElapsedMs()", context), 0);
+vm.runInContext(
+  "state.activeWorkout.exercises.push({ name: 'Squat', sets: [] }); startActiveWorkoutClock()",
+  context,
+);
+assert.equal(
+  typeof vm.runInContext("state.activeWorkout.startTime", context),
+  "number",
+);
+vm.runInContext(
+  "state.templates = [{ name: 'Hypertrophy', exercises: [{ name: 'Row', sets: 3, reps: 8, setGroups: [{ sets: 3, reps: 8, repLow: 8, repHigh: 12 }] }] }]; startWorkout(0)",
+  context,
 );
 vm.runInContext(
   "updateActiveOverview = () => {}; updateSet(0, 0, 'weight', '135.5')",
