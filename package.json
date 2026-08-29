@@ -1,4 +1,6 @@
 {
+  "name": "setritual-pwa",
+  "private": true,
   "scripts": {
     "test": "node tests/run-tests.cjs",
     "check": "npm test && prettier --check index.html sw.js manifest.json tests/run-tests.cjs"

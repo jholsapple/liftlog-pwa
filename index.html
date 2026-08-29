@@ -12,10 +12,14 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="apple-mobile-web-app-title" content="LiftLog" />
+    <meta name="apple-mobile-web-app-title" content="SetRitual" />
+    <meta
+      name="description"
+      content="SetRitual is a private, adaptive workout planner and training companion."
+    />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <title>LiftLog</title>
+    <title>SetRitual</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap"
@@ -1528,7 +1532,7 @@
               ><button
                 class="help-btn"
                 onclick="startTour()"
-                aria-label="How to use LiftLog"
+                aria-label="How to use SetRitual"
               >
                 ?
               </button>
@@ -1637,7 +1641,7 @@
           <div class="card last-insight">
             <div class="insight-icon">✦</div>
             <div class="insight-copy">
-              <strong>Make LiftLog yours</strong
+              <strong>Make SetRitual yours</strong
               ><span
                 >Choose an accent color below. It updates buttons, progress,
                 timers, and highlights throughout the app.</span
@@ -1824,7 +1828,7 @@
             ></div>
             <div class="section-label">Help</div>
             <button class="btn btn-primary" onclick="startTour()">
-              How to use LiftLog
+              How to use SetRitual
             </button>
           </div>
         </div>
@@ -1964,7 +1968,7 @@
         <div class="modal-handle"></div>
         <div class="modal-title">Generate a Plan</div>
         <p class="setting-copy" style="margin-bottom: 16px">
-          Choose what fits your training. LiftLog will create an editable
+          Choose what fits your training. SetRitual will create an editable
           starter plan on this device.
         </p>
         <div class="input-group">
@@ -2200,12 +2204,12 @@
       let modalReturnFocus = null;
       let editingTemplateIndex = null;
       let tourStep = 0;
-      const TOUR_STORAGE_KEY = "liftlog_onboarding_v2";
+      const TOUR_STORAGE_KEY = "setritual_onboarding_v1";
       const tourSteps = [
         {
           icon: "🏋️",
-          title: "Welcome to LiftLog",
-          body: "LiftLog keeps your workout plan, live training log, history, and records together. Everything stays private on this device.",
+          title: "Welcome to SetRitual",
+          body: "SetRitual keeps your workout plan, live training log, history, and records together. Everything stays private on this device.",
           tip: "Your data is local. Use Export backup in Options occasionally so you always have a copy.",
         },
         {
@@ -2218,7 +2222,7 @@
           icon: "▶",
           title: "Start today's session",
           body: "Today automatically surfaces a workout that matches the weekday. You can also start any workout from Plan or begin a free session.",
-          tip: "LiftLog remembers your previous weights and uses your 1RM when a plan includes percentages.",
+          tip: "SetRitual remembers your previous weights and uses your 1RM when a plan includes percentages.",
         },
         {
           icon: "✓",
@@ -2235,7 +2239,7 @@
         {
           icon: "✦",
           title: "Make it feel like yours",
-          body: "Open Options to change LiftLog’s accent color, weight unit, plate rounding, and automatic rest time. Options is also home to backups and this guide.",
+          body: "Open Options to change SetRitual’s accent color, weight unit, plate rounding, and automatic rest time. Options is also home to backups and this guide.",
           tip: "Color changes apply instantly across buttons, timers, progress bars, and highlights.",
         },
       ];
@@ -2338,7 +2342,7 @@
           next = document.getElementById("tour-next");
         back.style.visibility = tourStep === 0 ? "hidden" : "visible";
         next.textContent =
-          tourStep === tourSteps.length - 1 ? "Start using LiftLog" : "Next";
+          tourStep === tourSteps.length - 1 ? "Start using SetRitual" : "Next";
       }
       function nextTourStep() {
         if (tourStep < tourSteps.length - 1) {
@@ -2392,7 +2396,7 @@
         const url = URL.createObjectURL(blob),
           a = document.createElement("a");
         a.href = url;
-        a.download = `liftlog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `setritual-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
         state.lastBackup = Date.now();
@@ -2428,7 +2432,7 @@
             renderToday();
           });
         } catch {
-          showToast("That file is not a valid LiftLog backup");
+          showToast("That file is not a valid SetRitual backup");
         }
       }
 

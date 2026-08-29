@@ -3,6 +3,9 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const html = fs.readFileSync("index.html", "utf8");
+const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+assert.equal(manifest.name, "SetRitual");
+assert.ok(html.includes("<title>SetRitual</title>"));
 assert.ok(html.includes('onclick="toggleRestTimer()"'));
 assert.ok(!html.includes("Copy last"));
 assert.ok(html.includes('onclick="prepareFinishWorkout()"'));
@@ -115,7 +118,7 @@ assert.equal(vm.runInContext("nextIncompleteSet().si", context), 0);
 assert.equal(vm.runInContext("tourSteps.length", context), 6);
 assert.equal(
   vm.runInContext("TOUR_STORAGE_KEY", context),
-  "liftlog_onboarding_v2",
+  "setritual_onboarding_v1",
 );
 
 const generatedPlan = vm.runInContext(
@@ -146,4 +149,4 @@ assert.equal(
   "Actual Unscheduled Workout",
 );
 
-console.log("LiftLog tests passed");
+console.log("SetRitual tests passed");

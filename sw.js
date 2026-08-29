@@ -1,4 +1,4 @@
-const CACHE = "liftlog-v2";
+const CACHE = "setritual-v1";
 const APP_SHELL = [
   "./",
   "./index.html",

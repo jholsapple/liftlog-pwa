@@ -1,7 +1,7 @@
 {
-  "name": "LiftLog",
-  "short_name": "LiftLog",
-  "description": "Simple weightlifting tracker",
+  "name": "SetRitual",
+  "short_name": "SetRitual",
+  "description": "Your private, adaptive workout planner and training companion.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
