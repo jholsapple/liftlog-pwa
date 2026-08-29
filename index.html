@@ -752,6 +752,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
       }
+      #templates-list.workout-list {
+        grid-template-columns: 1fr;
+      }
       #templates-list > .empty {
         grid-column: 1 / -1;
       }
@@ -783,6 +786,20 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.06em;
+      }
+      .plan-card .template-header {
+        min-height: 92px;
+      }
+      .plan-back {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 2px;
+      }
+      .plan-back-title {
+        font-size: 18px;
+        font-weight: 600;
       }
       .template-header {
         display: flex;
@@ -1907,7 +1924,7 @@
           </svg>
           Today
         </button>
-        <button id="nav-templates" onclick="showScreen('templates')">
+        <button id="nav-templates" onclick="openPlansScreen()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
               d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
@@ -2272,6 +2289,7 @@
       let toastTimer = null;
       let modalReturnFocus = null;
       let editingTemplateIndex = null;
+      let selectedPlanKey = null;
       let tourStep = 0;
       const TOUR_STORAGE_KEY = "setritual_onboarding_v1";
       const tourSteps = [
@@ -3242,6 +3260,7 @@
       function renderTemplates() {
         const list = document.getElementById("templates-list");
         if (!state.templates || state.templates.length === 0) {
+          list.className = "";
           list.innerHTML = `<div class="empty">
       <div class="empty-icon">📋</div>
       <div class="empty-title">No plan imported yet</div>
@@ -3249,14 +3268,76 @@
     </div>`;
           return;
         }
-        let html = "";
+        const groups = getPlanGroups();
+        if (
+          selectedPlanKey &&
+          groups.some((group) => group.key === selectedPlanKey)
+        )
+          renderPlanWorkouts(
+            groups.find((group) => group.key === selectedPlanKey),
+          );
+        else {
+          selectedPlanKey = null;
+          renderPlanOverview(groups);
+        }
+      }
+
+      function getPlanGroups() {
+        const groups = new Map();
+        state.templates.forEach((template, index) => {
+          const key = template.planId
+            ? `id:${template.planId}`
+            : template.program
+              ? `program:${template.program}`
+              : "ungrouped";
+          if (!groups.has(key))
+            groups.set(key, {
+              key,
+              name: template.program || "My Plan",
+              workouts: [],
+            });
+          groups.get(key).workouts.push({ template, index });
+        });
+        return [...groups.values()];
+      }
+
+      function renderPlanOverview(groups) {
+        const list = document.getElementById("templates-list");
+        list.className = "plan-overview";
+        list.innerHTML = groups
+          .map((group, groupIndex) => {
+            const templates = group.workouts.map((item) => item.template);
+            const cardioCount = templates.filter(isCardioTemplate).length;
+            const allCardio = cardioCount === templates.length;
+            const allWeights = cardioCount === 0;
+            const icon = allCardio
+              ? templateIcon(templates[0])
+              : allWeights
+                ? "🏋️"
+                : "⚡";
+            const type = allCardio
+              ? "Cardio"
+              : allWeights
+                ? "Weights"
+                : "Mixed training";
+            const exerciseCount = templates.reduce(
+              (sum, template) => sum + template.exercises.length,
+              0,
+            );
+            return `<button class="template-card plan-card" onclick="openPlanGroup(${groupIndex})" aria-label="Open ${esc(group.name)} plan">
+      <div class="template-header"><div class="template-visual"><div class="template-icon" aria-hidden="true">${icon}</div><div><div class="template-type">${type}</div><div class="template-name">${esc(group.name)}</div><div class="template-meta">${templates.length} workout${templates.length === 1 ? "" : "s"} · ${exerciseCount} exercises</div></div></div><span aria-hidden="true" style="color:var(--text3);font-size:20px">›</span></div>
+    </button>`;
+          })
+          .join("");
+      }
+
+      function renderPlanWorkouts(group) {
+        const list = document.getElementById("templates-list");
+        list.className = "workout-list";
+        let html = `<div class="plan-back"><button class="btn btn-icon" onclick="showPlansOverview()" aria-label="Back to plans">←</button><div><div class="template-type">Plan</div><div class="plan-back-title">${esc(group.name)}</div></div></div>`;
         let lastWeekLabel = null;
-        state.templates.forEach((t, i) => {
-          const weekLabel = t.week
-            ? t.program
-              ? t.program + " — Week " + t.week
-              : "Week " + t.week
-            : null;
+        group.workouts.forEach(({ template: t, index: i }) => {
+          const weekLabel = t.week ? "Week " + t.week : null;
           if (weekLabel && weekLabel !== lastWeekLabel) {
             html += `<div class="week-group-label">${esc(weekLabel)}</div>`;
             lastWeekLabel = weekLabel;
@@ -3264,25 +3345,16 @@
           const hasPct = t.exercises.some(
             (e) => e.setGroups && e.setGroups.some((g) => g.pctLow),
           );
-          const kind = templateKind(t);
-          const icon = templateIcon(t);
           const totalSets = t.exercises.reduce(
             (sum, ex) => sum + (ex.sets || 0),
             0,
           );
-          const summary = t.exercises
-            .slice(0, 2)
-            .map((e) => esc(e.name))
-            .join(" · ");
           html += `<div class="template-card" role="button" tabindex="0" aria-label="Edit ${esc(t.name || t.day || "workout")}" onclick="openTemplateEditor(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTemplateEditor(${i})}">
       <div class="template-header">
-        <div class="template-visual">
-          <div class="template-icon" aria-hidden="true">${icon}</div>
-          <div>
-            <div class="template-day">${esc(t.day || kind)}</div>
+        <div>
+            <div class="template-day">${esc(t.day || "Workout")}</div>
             <div class="template-name">${esc(t.name || t.day || "Workout")}</div>
-            <div class="template-meta">${t.exercises.length} exercise${t.exercises.length === 1 ? "" : "s"} · ${totalSets} ${kind === "Cardio" ? `interval${totalSets === 1 ? "" : "s"}` : `set${totalSets === 1 ? "" : "s"}`}${hasPct ? ' <span class="pct-badge">%</span>' : ""}</div>
-          </div>
+            <div class="template-meta">${t.exercises.length} exercise${t.exercises.length === 1 ? "" : "s"} · ${totalSets} ${isCardioTemplate(t) ? `interval${totalSets === 1 ? "" : "s"}` : `set${totalSets === 1 ? "" : "s"}`}${hasPct ? ' <span class="pct-badge">%</span>' : ""}</div>
         </div>
         <div class="template-actions">
           <button class="btn btn-icon" onclick="event.stopPropagation();deleteTemplate(${i})" aria-label="Delete workout" style="margin-right:4px">
@@ -3291,10 +3363,30 @@
           <button class="btn-start" onclick="event.stopPropagation();startWorkout(${i})">Start</button>
         </div>
       </div>
-      <div class="template-summary"><div class="template-type">${kind}</div>${summary}${t.exercises.length > 2 ? ` · +${t.exercises.length - 2} more` : ""}</div>
+      <div style="padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px">${t.exercises
+        .slice(0, 6)
+        .map((exercise) => `<span class="pill">${esc(exercise.name)}</span>`)
+        .join(
+          "",
+        )}${t.exercises.length > 6 ? `<span class="pill">+${t.exercises.length - 6} more</span>` : ""}</div>
     </div>`;
         });
         list.innerHTML = html;
+      }
+
+      function openPlanGroup(groupIndex) {
+        const group = getPlanGroups()[groupIndex];
+        if (!group) return;
+        selectedPlanKey = group.key;
+        renderTemplates();
+      }
+      function showPlansOverview() {
+        selectedPlanKey = null;
+        renderTemplates();
+      }
+      function openPlansScreen() {
+        selectedPlanKey = null;
+        showScreen("templates");
       }
 
       function isCardioTemplate(template) {
@@ -3904,7 +3996,10 @@
           duration: Number(document.getElementById("generator-duration").value),
         };
         const generated = buildStarterPlan(options);
+        const planId = `generated-${Date.now()}`;
+        generated.forEach((workout) => (workout.planId = planId));
         state.templates.push(...generated);
+        selectedPlanKey = `id:${planId}`;
         saveState();
         closeModal("generator-modal");
         showScreen("templates");
@@ -4189,7 +4284,16 @@
       function confirmImport() {
         if (!pendingImport || pendingImport.length === 0) return;
         if (!state.templates) state.templates = [];
+        const planId = `imported-${Date.now()}`;
+        const planName =
+          pendingImport.find((workout) => workout.program)?.program ||
+          "Imported Plan";
+        pendingImport.forEach((workout) => {
+          workout.planId = planId;
+          workout.program = workout.program || planName;
+        });
         state.templates.push(...pendingImport);
+        selectedPlanKey = `id:${planId}`;
         saveState();
         pendingImport = null;
         closeModal("import-modal");
