@@ -743,8 +743,46 @@
         background: var(--surface);
         border: 0.5px solid var(--border);
         border-radius: var(--radius);
-        margin-bottom: 10px;
+        margin-bottom: 0;
         overflow: hidden;
+        min-width: 0;
+      }
+      #templates-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      #templates-list > .empty {
+        grid-column: 1 / -1;
+      }
+      .template-visual {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .template-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        background: var(--accent-dim);
+        font-size: 20px;
+      }
+      .template-summary {
+        padding: 0 14px 12px;
+        color: var(--text2);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .template-type {
+        color: var(--text3);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
       }
       .template-header {
         display: flex;
@@ -1441,6 +1479,7 @@
 
       /* WEEK GROUPS */
       .week-group-label {
+        grid-column: 1 / -1;
         font-size: 12px;
         font-weight: 600;
         color: var(--text2);
@@ -1450,6 +1489,11 @@
       }
       .week-group-label:first-child {
         margin-top: 0;
+      }
+      @media (max-width: 360px) {
+        #templates-list {
+          grid-template-columns: 1fr;
+        }
       }
       .set-note {
         grid-column: 2 / 4;
@@ -1992,12 +2036,18 @@
         </p>
         <div class="input-group">
           <label class="input-label" for="generator-goal">Primary goal</label
-          ><select class="text-input" id="generator-goal" style="width: 100%">
+          ><select
+            class="text-input"
+            id="generator-goal"
+            style="width: 100%"
+            onchange="updateGeneratorOptions()"
+          >
             <option value="general">General fitness</option>
             <option value="muscle">Build muscle</option>
             <option value="strength">Build strength</option>
             <option value="powerbuilding">Powerbuilding</option>
             <option value="conditioning">Conditioning &amp; fat loss</option>
+            <option value="cardio">Cardio</option>
           </select>
         </div>
         <div class="input-group">
@@ -2697,7 +2747,7 @@
               ? `<div class="session-complete-note">Every set is checked off. Strong work.</div>`
               : "";
         const nextHtml = next
-          ? `<button class="next-set-card" onclick="scrollToNextSet()" aria-label="Go to ${esc(next.ex.name)}, set ${next.si + 1}"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></button>`
+          ? `<button class="next-set-card" onclick="scrollToNextSet()" aria-label="Go to ${esc(next.ex.name)}, set ${next.si + 1}"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.ex.metric === "minutes" ? next.set.repTarget || (next.set.reps ? next.set.reps + " min" : "Log minutes") : `${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}`}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></button>`
           : "";
         document.getElementById("today-overview-area").innerHTML =
           `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
@@ -2878,8 +2928,8 @@
             (set, si) => `
     <div class="set-row" id="set-${ei}-${si}">
       <button class="set-num" onclick="removeSet(${ei},${si})" aria-label="Remove set ${si + 1}" title="Remove set" style="background:none;border:0;cursor:pointer">${si + 1}</button>
-      <input type="text" class="set-input" placeholder="${set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" oninput="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Weight for ${esc(ex.name)} set ${si + 1}" />
-      <input type="text" class="set-input" placeholder="${set.repTarget ? esc(set.repTarget) : "reps"}" value="${set.reps || ""}" oninput="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" enterkeyhint="next" autocomplete="off" aria-label="Actual reps for ${esc(ex.name)} set ${si + 1}${set.repTarget ? `, target ${esc(set.repTarget)}` : ""}" />
+      <input type="text" class="set-input" placeholder="${ex.metric === "minutes" ? "—" : set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" oninput="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Weight for ${esc(ex.name)} set ${si + 1}" ${ex.metric === "minutes" ? "disabled" : ""} />
+      <input type="text" class="set-input" placeholder="${set.repTarget ? esc(set.repTarget) : ex.metric === "minutes" ? "min" : "reps"}" value="${set.reps || ""}" oninput="updateSet(${ei},${si},'reps',this.value)" inputmode="numeric" enterkeyhint="next" autocomplete="off" aria-label="Actual ${ex.metric === "minutes" ? "minutes" : "reps"} for ${esc(ex.name)} set ${si + 1}${set.repTarget ? `, target ${esc(set.repTarget)}` : ""}" />
       <button class="set-done ${set.done ? "checked" : ""}" onclick="toggleSet(${ei},${si})" aria-label="Mark set ${si + 1} ${set.done ? "incomplete" : "complete"}" aria-pressed="${set.done}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
@@ -2900,7 +2950,7 @@
         </div>
       </div>
       <div style="display:grid;grid-template-columns:28px 1fr 1fr 36px;gap:8px;padding:6px 16px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">
-        <span></span><span style="text-align:center">${unitLabel()}</span><span style="text-align:center">reps</span><span></span>
+        <span></span><span style="text-align:center">${ex.metric === "minutes" ? "" : unitLabel()}</span><span style="text-align:center">${ex.metric === "minutes" ? "min" : "reps"}</span><span></span>
       </div>
       ${sets}
       <div class="add-set-row"><button class="btn btn-sm" onclick="addSet(${ei})">+ Add Set</button></div>
@@ -2947,12 +2997,17 @@
                   const repLow = g.repLow || g.reps;
                   const repHigh = g.repHigh || g.reps;
                   const hasRange = repHigh > repLow;
+                  const usesMinutes = ex.metric === "minutes";
                   sets.push({
                     weight: "",
-                    reps: hasRange ? "" : g.reps,
+                    reps: hasRange || usesMinutes ? "" : g.reps,
                     done: false,
                     suggestedWeight: suggested,
-                    repTarget: hasRange ? `${repLow}–${repHigh}` : "",
+                    repTarget: usesMinutes
+                      ? `${repLow} min`
+                      : hasRange
+                        ? `${repLow}–${repHigh}`
+                        : "",
                     repLow,
                     repHigh,
                     pctLow: g.pctLow,
@@ -2976,7 +3031,7 @@
                 };
               });
             }
-            return { name: ex.name, sets };
+            return { name: ex.name, metric: ex.metric, sets };
           });
         }
         state.activeWorkout = {
@@ -3209,11 +3264,25 @@
           const hasPct = t.exercises.some(
             (e) => e.setGroups && e.setGroups.some((g) => g.pctLow),
           );
+          const kind = templateKind(t);
+          const icon = templateIcon(t);
+          const totalSets = t.exercises.reduce(
+            (sum, ex) => sum + (ex.sets || 0),
+            0,
+          );
+          const summary = t.exercises
+            .slice(0, 2)
+            .map((e) => esc(e.name))
+            .join(" · ");
           html += `<div class="template-card" role="button" tabindex="0" aria-label="Edit ${esc(t.name || t.day || "workout")}" onclick="openTemplateEditor(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTemplateEditor(${i})}">
       <div class="template-header">
-        <div>
-          <div class="template-day">${esc(t.name || t.day || "")}</div>
-          <div class="template-meta">${t.exercises.length} exercises${hasPct ? ' <span class="pct-badge">%</span>' : ""}</div>
+        <div class="template-visual">
+          <div class="template-icon" aria-hidden="true">${icon}</div>
+          <div>
+            <div class="template-day">${esc(t.day || kind)}</div>
+            <div class="template-name">${esc(t.name || t.day || "Workout")}</div>
+            <div class="template-meta">${t.exercises.length} exercise${t.exercises.length === 1 ? "" : "s"} · ${totalSets} ${kind === "Cardio" ? `interval${totalSets === 1 ? "" : "s"}` : `set${totalSets === 1 ? "" : "s"}`}${hasPct ? ' <span class="pct-badge">%</span>' : ""}</div>
+          </div>
         </div>
         <div class="template-actions">
           <button class="btn btn-icon" onclick="event.stopPropagation();deleteTemplate(${i})" aria-label="Delete workout" style="margin-right:4px">
@@ -3222,16 +3291,36 @@
           <button class="btn-start" onclick="event.stopPropagation();startWorkout(${i})">Start</button>
         </div>
       </div>
-      <div style="padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px">
-        ${t.exercises
-          .slice(0, 6)
-          .map((e) => `<span class="pill">${esc(e.name)}</span>`)
-          .join("")}
-        ${t.exercises.length > 6 ? `<span class="pill">+${t.exercises.length - 6} more</span>` : ""}
-      </div>
+      <div class="template-summary"><div class="template-type">${kind}</div>${summary}${t.exercises.length > 2 ? ` · +${t.exercises.length - 2} more` : ""}</div>
     </div>`;
         });
         list.innerHTML = html;
+      }
+
+      function isCardioTemplate(template) {
+        return (
+          template.type === "cardio" ||
+          template.exercises.some(
+            (exercise) =>
+              exercise.metric === "minutes" ||
+              /treadmill|bike|cycling|rower|rowing|elliptical|stair/i.test(
+                exercise.name,
+              ),
+          )
+        );
+      }
+      function templateKind(template) {
+        return isCardioTemplate(template) ? "Cardio" : "Weights";
+      }
+      function templateIcon(template) {
+        if (!isCardioTemplate(template)) return "🏋️";
+        const names = template.exercises
+          .map((exercise) => exercise.name)
+          .join(" ");
+        if (/bike|cycling/i.test(names)) return "🚴";
+        if (/row/i.test(names)) return "🚣";
+        if (/stair/i.test(names)) return "↗️";
+        return "🏃";
       }
 
       function deleteTemplate(i) {
@@ -3262,6 +3351,7 @@
               pctLow: group.pctLow,
               pctHigh: group.pctHigh,
               rpe: group.rpe,
+              metric: ex.metric || "",
             };
           }),
         );
@@ -3290,6 +3380,7 @@
             pctLow: row.dataset.pctLow ? Number(row.dataset.pctLow) : null,
             pctHigh: row.dataset.pctHigh ? Number(row.dataset.pctHigh) : null,
             rpe: row.dataset.rpe ? Number(row.dataset.rpe) : null,
+            metric: row.dataset.metric || "",
           }))
           .filter((row) => row.name);
       }
@@ -3301,11 +3392,11 @@
             (
               row,
               index,
-            ) => `<div class="plan-edit-row" data-pct-low="${row.pctLow || ""}" data-pct-high="${row.pctHigh || ""}" data-rpe="${row.rpe || ""}">
+            ) => `<div class="plan-edit-row" data-pct-low="${row.pctLow || ""}" data-pct-high="${row.pctHigh || ""}" data-rpe="${row.rpe || ""}" data-metric="${row.metric || ""}">
           <div class="plan-edit-top"><input class="text-input plan-ex-name" value="${esc(row.name)}" aria-label="Exercise name" />
           <div class="plan-drag"><button class="btn btn-sm" onclick="moveTemplateExerciseRow(${index},-1)" aria-label="Move exercise up" ${index === 0 ? "disabled" : ""}>↑</button><button class="btn btn-sm" onclick="moveTemplateExerciseRow(${index},1)" aria-label="Move exercise down" ${index === rows.length - 1 ? "disabled" : ""}>↓</button></div>
           <button class="btn btn-icon" onclick="removeTemplateExerciseRow(${index})" aria-label="Remove exercise">✕</button></div>
-          <div class="plan-edit-fields"><label><span class="input-label">Sets</span><input type="number" min="1" max="20" class="text-input plan-ex-sets" value="${row.sets}" /></label><label><span class="input-label">Min reps</span><input type="number" min="1" max="100" class="text-input plan-ex-low" value="${row.repLow}" /></label><label><span class="input-label">Max reps</span><input type="number" min="1" max="100" class="text-input plan-ex-high" value="${row.repHigh}" /></label></div>
+          <div class="plan-edit-fields"><label><span class="input-label">${row.metric === "minutes" ? "Intervals" : "Sets"}</span><input type="number" min="1" max="20" class="text-input plan-ex-sets" value="${row.sets}" /></label><label><span class="input-label">Min ${row.metric === "minutes" ? "minutes" : "reps"}</span><input type="number" min="1" max="100" class="text-input plan-ex-low" value="${row.repLow}" /></label><label><span class="input-label">Max ${row.metric === "minutes" ? "minutes" : "reps"}</span><input type="number" min="1" max="100" class="text-input plan-ex-high" value="${row.repHigh}" /></label></div>
         </div>`,
           )
           .join("");
@@ -3349,6 +3440,7 @@
             high = Math.max(row.repLow, row.repHigh);
           return {
             name: row.name,
+            metric: row.metric || undefined,
             sets: row.sets,
             reps: low,
             setGroups: [
@@ -3655,7 +3747,37 @@
         strength: "Strength",
         powerbuilding: "Powerbuilding",
         conditioning: "Conditioning",
+        cardio: "Cardio",
       };
+      const strengthEquipmentOptions = [
+        ["gym", "Full gym"],
+        ["dumbbells", "Dumbbells & bench"],
+        ["bodyweight", "Bodyweight only"],
+      ];
+      const cardioEquipmentOptions = [
+        ["treadmill", "Treadmill"],
+        ["bike", "Stationary bike"],
+        ["rower", "Rowing machine"],
+        ["elliptical", "Elliptical"],
+        ["stairs", "Stair climber"],
+      ];
+      const cardioEquipmentNames = {
+        treadmill: "Treadmill",
+        bike: "Stationary Bike",
+        rower: "Rowing Machine",
+        elliptical: "Elliptical",
+        stairs: "Stair Climber",
+      };
+
+      function updateGeneratorOptions() {
+        const goal = document.getElementById("generator-goal").value;
+        const equipment = document.getElementById("generator-equipment");
+        const options =
+          goal === "cardio" ? cardioEquipmentOptions : strengthEquipmentOptions;
+        equipment.innerHTML = options
+          .map(([value, label]) => `<option value="${value}">${label}</option>`)
+          .join("");
+      }
 
       function generatedPrescription(goal, level, exerciseIndex) {
         let sets = level === "beginner" ? 3 : 4,
@@ -3685,6 +3807,8 @@
       }
 
       function buildStarterPlan({ goal, equipment, level, days, duration }) {
+        if (goal === "cardio")
+          return buildCardioPlan({ equipment, level, days, duration });
         const schedule = generatorSchedules[days],
           maxExercises = duration <= 30 ? 4 : duration <= 45 ? 5 : 6;
         return schedule.map(([name, key], index) => {
@@ -3717,6 +3841,56 @@
             program: `${generatorGoalNames[goal]} Starter`,
             generated: true,
             exercises,
+          };
+        });
+      }
+
+      function buildCardioPlan({ equipment, level, days, duration }) {
+        const sessionNames = [
+          "Easy Endurance",
+          "Intervals",
+          "Recovery Cardio",
+          "Tempo Cardio",
+          "Long Endurance",
+        ];
+        const machine = cardioEquipmentNames[equipment] || "Cardio";
+        return generatorWeekdays[days].map((day, index) => {
+          const isIntervals = index === 1 || index === 3;
+          const intervalMinutes = level === "beginner" ? 2 : 3;
+          const sets = isIntervals
+            ? Math.max(4, Math.floor(duration / (intervalMinutes * 2)))
+            : 1;
+          const minutes = isIntervals
+            ? intervalMinutes
+            : index === days - 1
+              ? duration
+              : Math.max(20, duration - 10);
+          return {
+            day,
+            name: sessionNames[index],
+            program: "Cardio Starter",
+            generated: true,
+            type: "cardio",
+            equipment,
+            exercises: [
+              {
+                name: `${machine} · ${sessionNames[index]}`,
+                metric: "minutes",
+                sets,
+                reps: minutes,
+                setGroups: [
+                  {
+                    sets,
+                    reps: minutes,
+                    repLow: minutes,
+                    repHigh: minutes,
+                    pctLow: null,
+                    pctHigh: null,
+                    rpe: null,
+                  },
+                ],
+              },
+            ],
           };
         });
       }
@@ -3876,7 +4050,7 @@
 
         const weekPattern = /^week\s*(\d+)\s*:?\s*(.*)/i;
         const dayPatternOld =
-          /^(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|DAY\s*\d+)[\s–\-]*(.*)/i;
+          /^(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|DAY\s*\d+)\b\s*(?:[:–—-]\s*)?(.*)$/i;
         const skipLine =
           /^(rest\s+day|two\s+rest|semi[- ]?deload|avoid\s+failure)/i;
 
@@ -3899,7 +4073,10 @@
             const dayName =
               dayMatchOld[1].charAt(0).toUpperCase() +
               dayMatchOld[1].slice(1).toLowerCase();
-            const subtitle = dayMatchOld[2].trim();
+            const subtitle = dayMatchOld[2]
+              .replace(/^[:–—-]+\s*/, "")
+              .replace(/[:\s]+$/, "")
+              .trim();
             current = {
               day: dayName,
               name: subtitle || dayName,
@@ -4206,7 +4383,7 @@
         for (const ex of w.exercises) {
           const exTon = calcExTonnage(ex);
           html += `<div class="detail-ex"><div class="detail-ex-name">${esc(ex.name)}</div>
-      <div class="detail-set-row header"><span>Set</span><span>Weight</span><span>Reps</span></div>`;
+      <div class="detail-set-row header"><span>${ex.metric === "minutes" ? "Interval" : "Set"}</span><span>${ex.metric === "minutes" ? "" : "Weight"}</span><span>${ex.metric === "minutes" ? "Minutes" : "Reps"}</span></div>`;
           ex.sets.forEach((s, i) => {
             html += `<div class="detail-set-row"><span>${i + 1}${s.done ? "" : " ·"}</span><span>${s.weight ? s.weight + " " + unitLabel() : "—"}</span><span>${s.reps || "—"}</span></div>`;
           });
@@ -4295,6 +4472,9 @@
       function renderPRs() {
         const prs = computePRs();
         const list = document.getElementById("pr-list");
+        const maxesTab = document.getElementById("tab-maxes");
+        if (maxesTab)
+          maxesTab.hidden = Object.keys(computeOneRepMaxes()).length === 0;
         const keys = Object.keys(prs);
         if (keys.length === 0) {
           list.innerHTML = `<div class="empty" style="padding:24px 0"><div class="empty-title">No records yet</div><p>Log your first workout with weights to set your PRs.</p></div>`;
@@ -4329,15 +4509,26 @@
       }
 
       function getMaxExercises() {
-        const names = new Set();
-        (state.templates || []).forEach((t) =>
-          t.exercises.forEach((ex) => {
-            if (ex.setGroups && ex.setGroups.some((g) => g.pctLow))
-              names.add(ex.name);
-          }),
-        );
-        Object.keys(state.maxes || {}).forEach((n) => names.add(n));
-        return [...names].sort();
+        return Object.keys(computeOneRepMaxes()).sort();
+      }
+
+      function computeOneRepMaxes() {
+        const maxes = {};
+        for (const workout of state.workouts || []) {
+          for (const exercise of workout.exercises || []) {
+            for (const set of exercise.sets || []) {
+              const weight = Number(set.weight);
+              if (!set.done || Number(set.reps) !== 1 || weight <= 0) continue;
+              if (!maxes[exercise.name] || weight > maxes[exercise.name].weight)
+                maxes[exercise.name] = {
+                  weight,
+                  date: workout.endTime || workout.startTime,
+                  workoutId: workout.id,
+                };
+            }
+          }
+        }
+        return maxes;
       }
 
       function estimateOneRM(name) {
@@ -4352,28 +4543,20 @@
 
       function renderMaxes() {
         const list = document.getElementById("maxes-list");
-        const exercises = getMaxExercises();
-        if (!state.maxes) state.maxes = {};
+        const maxes = computeOneRepMaxes();
+        const exercises = Object.keys(maxes);
         if (exercises.length === 0) {
-          list.innerHTML = `<div class="empty" style="padding:24px 0"><div class="empty-title">No percentage-based exercises</div><p>Import a plan with percentages (e.g. "3x5 @80%") and your exercises will appear here.</p></div>`;
+          list.innerHTML = `<div class="empty" style="padding:24px 0"><div class="empty-title">No 1-rep maxes yet</div><p>Complete a weighted set of exactly 1 rep and that exercise will appear here automatically.</p></div>`;
           return;
         }
         list.innerHTML = exercises
-          .map((name, index) => {
-            const est = estimateOneRM(name);
-            const val = state.maxes[name] || "";
-            const hint =
-              !val && est
-                ? `<span style="font-size:11px;color:var(--text3)">est. ${est} ${unitLabel()}</span>`
-                : "";
-            return `<div class="max-row">
-      <span class="max-name">${esc(name)}</span>
-      ${hint}
-      <input type="number" class="max-input" value="${val}" placeholder="${est || "—"}" inputmode="decimal"
-        onchange="setMaxAt(${index}, this.value)" />
-      <span class="max-unit">${unitLabel()}</span>
-    </div>`;
-          })
+          .sort((a, b) => maxes[b].weight - maxes[a].weight)
+          .map(
+            (name) => `<div class="pr-row">
+      <span class="pr-exercise">${esc(name)}</span>
+      <div class="pr-right"><div class="pr-weight">${maxes[name].weight} <span style="font-size:14px;color:var(--text2)">${unitLabel()}</span></div><div class="pr-date">1 rep · ${fmtDate(maxes[name].date)}</div></div>
+    </div>`,
+          )
           .join("");
       }
       function setMaxAt(index, val) {
@@ -4389,8 +4572,7 @@
       }
 
       function getOneRM(name) {
-        if (state.maxes && state.maxes[name]) return state.maxes[name];
-        return estimateOneRM(name);
+        return computeOneRepMaxes()[name]?.weight || null;
       }
 
       function roundTo5(n) {

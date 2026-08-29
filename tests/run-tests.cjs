@@ -13,6 +13,7 @@ assert.ok(html.includes('class="session-complete-note"'));
 assert.ok(html.includes("font-size: 44px"));
 assert.ok(html.includes('onclick="scrollToNextSet()"'));
 assert.ok(!html.includes("Optional RPE"));
+assert.ok(html.includes("maxesTab.hidden"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -151,6 +152,36 @@ assert.equal(generatedPlan[0].day, "Monday");
 assert.equal(generatedPlan[0].exercises.length, 4);
 assert.equal(generatedPlan[0].exercises[0].setGroups[0].repHigh, 12);
 assert.equal(generatedPlan[0].generated, true);
+
+const cardioPlan = vm.runInContext(
+  `buildStarterPlan({ goal: 'cardio', equipment: 'bike', level: 'beginner', days: 3, duration: 30 })`,
+  context,
+);
+assert.equal(cardioPlan.length, 3);
+assert.equal(cardioPlan[0].type, "cardio");
+assert.equal(cardioPlan[0].exercises[0].metric, "minutes");
+assert.match(cardioPlan[0].exercises[0].name, /Bike/);
+
+const colonDayPlan = context.parsePlan(
+  "Monday:\n- Bench Press: 3x5\nWednesday: Pull\n- Cable Row: 3x10",
+);
+assert.equal(colonDayPlan[0].day, "Monday");
+assert.equal(colonDayPlan[0].name, "Monday");
+assert.equal(colonDayPlan[1].day, "Wednesday");
+assert.equal(colonDayPlan[1].name, "Pull");
+
+vm.runInContext(
+  `state.workouts = [{ id: 20, startTime: 100, exercises: [{ name: 'Deadlift', sets: [
+    { weight: 300, reps: 2, done: true },
+    { weight: 275, reps: 1, done: true },
+    { weight: 315, reps: 1, done: false }
+  ] }] }];`,
+  context,
+);
+assert.deepEqual(
+  JSON.parse(vm.runInContext("JSON.stringify(computeOneRepMaxes())", context)),
+  { Deadlift: { weight: 275, date: 100, workoutId: 20 } },
+);
 
 const now = Date.now();
 vm.runInContext(
