@@ -3413,7 +3413,7 @@
       function renderPlanWorkouts(group) {
         const list = document.getElementById("templates-list");
         list.className = "workout-list";
-        let html = `<div class="plan-back"><button class="plan-native-back" onclick="showPlansOverview()" aria-label="Back to plans">‹ Plans</button><div><div class="plan-title-row"><div class="plan-back-title">${esc(group.name)}</div><button class="btn btn-sm" onclick="openPlanEditor()">Edit</button></div>${group.description ? `<div class="plan-description">${esc(group.description)}</div>` : ""}</div></div>`;
+        let html = `<div class="plan-back"><button class="plan-native-back" onclick="showPlansOverview()" aria-label="Back to plans">‹ Plans</button><div><div class="plan-title-row"><div class="plan-back-title">${esc(group.name)}</div><button class="btn btn-icon" onclick="openPlanEditor()" aria-label="Edit plan" title="Edit plan"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button></div>${group.description ? `<div class="plan-description">${esc(group.description)}</div>` : ""}</div></div>`;
         let lastWeekLabel = null;
         group.workouts.forEach(({ template: t, index: i }) => {
           const weekLabel = t.week ? "Week " + t.week : null;

@@ -16,6 +16,7 @@ assert.ok(!html.includes("Optional RPE"));
 assert.ok(html.includes("maxesTab.hidden"));
 assert.ok(html.includes('class="plan-native-back"'));
 assert.ok(html.includes('class="modal-title">Edit Plan'));
+assert.ok(html.includes('aria-label="Edit plan"'));
 assert.ok(html.includes('onclick="showDetail(${last.id})"'));
 assert.ok(html.includes(".plan-card .template-name"));
 const source = html
