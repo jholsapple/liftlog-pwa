@@ -456,6 +456,22 @@
         gap: 12px;
         padding: 14px 16px;
       }
+      .insight-button {
+        width: 100%;
+        color: var(--text);
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .section-intro {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 4px 2px 16px;
+      }
+      .section-intro .insight-copy strong {
+        font-size: 16px;
+      }
       .insight-icon {
         width: 38px;
         height: 38px;
@@ -788,7 +804,14 @@
         letter-spacing: 0.06em;
       }
       .plan-card .template-header {
-        min-height: 92px;
+        min-height: 108px;
+        padding: 16px;
+      }
+      .plan-card .template-name {
+        color: #fff;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1.2;
       }
       .plan-back {
         grid-column: 1 / -1;
@@ -800,6 +823,34 @@
       .plan-back-title {
         font-size: 18px;
         font-weight: 600;
+      }
+      .plan-native-back {
+        min-height: 44px;
+        padding: 0 4px 0 0;
+        border: 0;
+        background: none;
+        color: var(--accent);
+        font:
+          600 17px/1 -apple-system,
+          BlinkMacSystemFont,
+          "DM Sans",
+          sans-serif;
+        cursor: pointer;
+      }
+      .plan-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .plan-description {
+        color: var(--text2);
+        font-size: 12px;
+        line-height: 1.35;
+        margin-top: 5px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
       .template-header {
         display: flex;
@@ -1722,7 +1773,7 @@
           >
             How to use SetRitual
           </button>
-          <div class="card last-insight">
+          <div class="section-intro">
             <div class="insight-icon">✦</div>
             <div class="insight-copy">
               <strong>Make SetRitual yours</strong
@@ -2181,7 +2232,39 @@
       </div>
     </div>
 
-    <!-- Cancel Workout Confirm -->
+    <!-- Edit Plan Modal -->
+    <div class="modal-overlay" id="edit-plan-modal">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Edit Plan</div>
+        <div class="input-group">
+          <label class="input-label" for="plan-name-input">Plan name</label>
+          <input class="text-input" id="plan-name-input" maxlength="80" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="plan-description-input"
+            >Description</label
+          >
+          <textarea
+            class="text-input"
+            id="plan-description-input"
+            rows="3"
+            maxlength="180"
+            placeholder="Optional notes about this plan"
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal('edit-plan-modal')">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="savePlanEdits()">
+            Save Plan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Workout Modal -->
     <div class="modal-overlay" id="edit-template-modal">
       <div class="modal" style="max-height: 92vh; overflow-y: auto">
         <div class="modal-handle"></div>
@@ -2887,7 +2970,7 @@
             exArea.innerHTML = "";
             actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout(${todayIdx})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Begin ${esc(todayTemplate.name)}</button>`;
           } else {
-            statusArea.innerHTML = `<div class="workout-status today-workout-card"><div class="workout-kicker">No workout scheduled</div><div class="workout-name-large">Move on your terms</div><div class="workout-meta-row"><span>Start a free session or choose a workout from Plan.</span></div></div>`;
+            statusArea.innerHTML = `<div class="section-intro"><div class="insight-copy"><span class="workout-kicker">No workout scheduled</span><strong style="font-size:24px;margin-top:4px">Move on your terms</strong><span>Start a free session or choose a workout from Plan.</span></div></div>`;
             exArea.innerHTML = "";
             actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -2898,7 +2981,7 @@
           const todayStart = new Date();
           todayStart.setHours(0, 0, 0, 0);
           if (last && workoutCompletedAt(last) < todayStart.getTime())
-            exArea.innerHTML = `<div class="card last-insight"><div class="insight-icon">↗</div><div class="insight-copy"><strong>Last session: ${esc(last.name || "Workout")}</strong><span>${fmtDate(last.startTime)} · ${last.exercises.length} exercises · ${fmtTonnage(calcSessionTonnage(last))} ${unitLabel()} moved</span></div></div>`;
+            exArea.innerHTML = `<button class="card last-insight insight-button" onclick="showDetail(${last.id})" aria-label="View details for last session, ${esc(last.name || "Workout")}"><div class="insight-icon">↗</div><div class="insight-copy"><strong>Last session: ${esc(last.name || "Workout")}</strong><span>${fmtDate(last.startTime)} · ${last.exercises.length} exercises · ${fmtTonnage(calcSessionTonnage(last))} ${unitLabel()} moved</span></div></button>`;
         } else {
           updateActiveOverview();
           statusArea.style.cssText =
@@ -3294,6 +3377,7 @@
             groups.set(key, {
               key,
               name: template.program || "My Plan",
+              description: template.planDescription || "",
               workouts: [],
             });
           groups.get(key).workouts.push({ template, index });
@@ -3315,17 +3399,12 @@
               : allWeights
                 ? "🏋️"
                 : "⚡";
-            const type = allCardio
-              ? "Cardio"
-              : allWeights
-                ? "Weights"
-                : "Mixed training";
             const exerciseCount = templates.reduce(
               (sum, template) => sum + template.exercises.length,
               0,
             );
             return `<button class="template-card plan-card" onclick="openPlanGroup(${groupIndex})" aria-label="Open ${esc(group.name)} plan">
-      <div class="template-header"><div class="template-visual"><div class="template-icon" aria-hidden="true">${icon}</div><div><div class="template-type">${type}</div><div class="template-name">${esc(group.name)}</div><div class="template-meta">${templates.length} workout${templates.length === 1 ? "" : "s"} · ${exerciseCount} exercises</div></div></div><span aria-hidden="true" style="color:var(--text3);font-size:20px">›</span></div>
+      <div class="template-header"><div class="template-visual"><div class="template-icon" aria-hidden="true">${icon}</div><div><div class="template-name">${esc(group.name)}</div><div class="template-meta">${templates.length} workout${templates.length === 1 ? "" : "s"} · ${exerciseCount} exercises</div>${group.description ? `<div class="plan-description">${esc(group.description)}</div>` : ""}</div></div><span aria-hidden="true" style="color:var(--text3);font-size:24px">›</span></div>
     </button>`;
           })
           .join("");
@@ -3334,7 +3413,7 @@
       function renderPlanWorkouts(group) {
         const list = document.getElementById("templates-list");
         list.className = "workout-list";
-        let html = `<div class="plan-back"><button class="btn btn-icon" onclick="showPlansOverview()" aria-label="Back to plans">←</button><div><div class="template-type">Plan</div><div class="plan-back-title">${esc(group.name)}</div></div></div>`;
+        let html = `<div class="plan-back"><button class="plan-native-back" onclick="showPlansOverview()" aria-label="Back to plans">‹ Plans</button><div><div class="plan-title-row"><div class="plan-back-title">${esc(group.name)}</div><button class="btn btn-sm" onclick="openPlanEditor()">Edit</button></div>${group.description ? `<div class="plan-description">${esc(group.description)}</div>` : ""}</div></div>`;
         let lastWeekLabel = null;
         group.workouts.forEach(({ template: t, index: i }) => {
           const weekLabel = t.week ? "Week " + t.week : null;
@@ -3383,6 +3462,42 @@
       function showPlansOverview() {
         selectedPlanKey = null;
         renderTemplates();
+      }
+      function openPlanEditor() {
+        const group = getPlanGroups().find(
+          (candidate) => candidate.key === selectedPlanKey,
+        );
+        if (!group) return;
+        document.getElementById("plan-name-input").value = group.name;
+        document.getElementById("plan-description-input").value =
+          group.description || "";
+        openModal("edit-plan-modal");
+      }
+      function savePlanEdits() {
+        const group = getPlanGroups().find(
+          (candidate) => candidate.key === selectedPlanKey,
+        );
+        if (!group) return;
+        const name = document.getElementById("plan-name-input").value.trim();
+        if (!name) {
+          document.getElementById("plan-name-input").focus();
+          return;
+        }
+        const description = document
+          .getElementById("plan-description-input")
+          .value.trim();
+        const planId =
+          group.workouts[0].template.planId || `plan-${Date.now()}`;
+        group.workouts.forEach(({ template }) => {
+          template.planId = planId;
+          template.program = name;
+          template.planDescription = description;
+        });
+        selectedPlanKey = `id:${planId}`;
+        saveState();
+        closeModal("edit-plan-modal");
+        renderTemplates();
+        showToast("Plan updated");
       }
       function openPlansScreen() {
         selectedPlanKey = null;

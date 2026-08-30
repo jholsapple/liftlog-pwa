@@ -14,6 +14,10 @@ assert.ok(html.includes("font-size: 44px"));
 assert.ok(html.includes('onclick="scrollToNextSet()"'));
 assert.ok(!html.includes("Optional RPE"));
 assert.ok(html.includes("maxesTab.hidden"));
+assert.ok(html.includes('class="plan-native-back"'));
+assert.ok(html.includes('class="modal-title">Edit Plan'));
+assert.ok(html.includes('onclick="showDetail(${last.id})"'));
+assert.ok(html.includes(".plan-card .template-name"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -154,7 +158,7 @@ assert.equal(generatedPlan[0].exercises[0].setGroups[0].repHigh, 12);
 assert.equal(generatedPlan[0].generated, true);
 vm.runInContext(
   `state.templates = [
-    { planId: 'strength-1', program: 'Strength', exercises: [] },
+    { planId: 'strength-1', program: 'Strength', planDescription: 'Three-day barbell plan', exercises: [] },
     { planId: 'strength-1', program: 'Strength', exercises: [] },
     { planId: 'cardio-1', program: 'Cardio', exercises: [] }
   ]`,
@@ -163,6 +167,10 @@ vm.runInContext(
 assert.equal(vm.runInContext("getPlanGroups().length", context), 2);
 assert.equal(vm.runInContext("getPlanGroups()[0].workouts.length", context), 2);
 assert.equal(vm.runInContext("getPlanGroups()[0].name", context), "Strength");
+assert.equal(
+  vm.runInContext("getPlanGroups()[0].description", context),
+  "Three-day barbell plan",
+);
 
 const cardioPlan = vm.runInContext(
   `buildStarterPlan({ goal: 'cardio', equipment: 'bike', level: 'beginner', days: 3, duration: 30 })`,
