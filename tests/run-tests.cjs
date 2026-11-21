@@ -28,6 +28,10 @@ assert.ok(!html.includes("Begin ${esc(todayTemplate.name)}"));
 assert.ok(html.includes('id="delete-plan-modal"'));
 assert.ok(html.includes("function deleteSelectedPlan()"));
 assert.ok(html.includes('id="plan-header-actions"'));
+assert.ok(html.includes("@keyframes screenIn"));
+assert.ok(html.includes("@keyframes badgeUnlock"));
+assert.ok(html.includes("just-checked"));
+assert.ok(html.includes("prefers-reduced-motion"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
