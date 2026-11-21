@@ -22,6 +22,9 @@ assert.ok(html.includes(".plan-card .template-name"));
 assert.ok(html.includes('id="records-badges-panel"'));
 assert.ok(html.includes('id="achievement-modal"'));
 assert.ok(html.includes("Next milestone"));
+assert.ok(html.includes("today-start-card"));
+assert.ok(html.includes("Start workout"));
+assert.ok(!html.includes("Begin ${esc(todayTemplate.name)}"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];

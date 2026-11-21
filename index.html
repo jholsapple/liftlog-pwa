@@ -270,7 +270,7 @@
         border: 0.5px solid var(--border);
         border-radius: var(--radius);
         padding: 20px;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
         text-align: center;
       }
       .workout-status.active-workout {
@@ -387,7 +387,7 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
       }
       .week-stat {
         background: var(--surface);
@@ -417,6 +417,40 @@
         overflow: hidden;
         text-align: left;
         padding: 20px;
+      }
+      .today-start-card {
+        display: block;
+        width: 100%;
+        color: var(--text);
+        font-family: inherit;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .today-start-card:active {
+        transform: scale(0.99);
+      }
+      .today-start-card:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .today-card-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 0.5px solid var(--border2);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .today-card-action span:last-child {
+        font-size: 22px;
+        line-height: 0.7;
       }
       .today-workout-card::after {
         content: "";
@@ -1467,7 +1501,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-top: 10px;
+        margin: 0 0 10px;
         padding: 13px 14px;
         border: 0.5px solid var(--border);
         border-radius: 13px;
@@ -3370,9 +3404,9 @@
               20,
               Math.round((totalSets * 2.5) / 5) * 5,
             );
-            statusArea.innerHTML = `<div class="workout-status today-workout-card active-workout"><div class="workout-kicker">${todayName}'s Workout</div><div class="workout-name-large">${esc(todayTemplate.name)}</div><div class="workout-meta-row"><span>${todayTemplate.exercises.length} exercises</span><span>${totalSets} working sets</span><span>~${estimate} min</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div></div>`;
+            statusArea.innerHTML = `<button type="button" class="workout-status today-workout-card active-workout today-start-card" onclick="startWorkout(${todayIdx})" aria-label="Start ${esc(todayTemplate.name)}"><div class="workout-kicker">${todayName}'s Workout</div><div class="workout-name-large">${esc(todayTemplate.name)}</div><div class="workout-meta-row"><span>${todayTemplate.exercises.length} exercises</span><span>${totalSets} working sets</span><span>~${estimate} min</span></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${exList}${more}</div><div class="today-card-action"><span>Start workout</span><span aria-hidden="true">›</span></div></button>`;
             exArea.innerHTML = "";
-            actionsArea.innerHTML = `<button class="btn btn-primary" onclick="startWorkout(${todayIdx})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Begin ${esc(todayTemplate.name)}</button>`;
+            actionsArea.innerHTML = "";
           } else {
             statusArea.innerHTML = `<div class="section-intro"><div class="insight-copy"><span class="workout-kicker">No workout scheduled</span><strong style="font-size:24px;margin-top:4px">Move on your terms</strong><span>Start a free session or choose a workout from Plan.</span></div></div>`;
             exArea.innerHTML = "";
