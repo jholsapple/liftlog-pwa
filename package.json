@@ -1,9 +1,16 @@
 {
   "name": "setritual-pwa",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
   "scripts": {
-    "test": "node tests/run-tests.cjs",
-    "check": "npm test && prettier --check index.html sw.js manifest.json tests/run-tests.cjs"
+    "test": "node tests/run-tests.cjs && node tests/v2-core-tests.mjs",
+    "test:v1": "node tests/run-tests.cjs",
+    "test:v2": "node tests/v2-core-tests.mjs",
+    "dev": "python3 -m http.server 8765 --bind 127.0.0.1",
+    "check": "npm test && prettier --check index.html sw.js manifest.json README.md docs packages services tests"
   },
   "devDependencies": {
     "prettier": "^3.8.3"

@@ -1,0 +1,6 @@
+{
+  "name": "@setritual/coach-client",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js"
+}
