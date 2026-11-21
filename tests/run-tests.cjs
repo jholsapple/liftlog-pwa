@@ -19,6 +19,9 @@ assert.ok(html.includes('class="modal-title">Edit Plan'));
 assert.ok(html.includes('aria-label="Edit plan"'));
 assert.ok(html.includes('onclick="showDetail(${last.id})"'));
 assert.ok(html.includes(".plan-card .template-name"));
+assert.ok(html.includes('id="records-badges-panel"'));
+assert.ok(html.includes('id="achievement-modal"'));
+assert.ok(html.includes("Next milestone"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -220,5 +223,42 @@ assert.equal(
   vm.runInContext("latestSavedWorkout().name", context),
   "Actual Unscheduled Workout",
 );
+
+vm.runInContext(
+  `state = {
+    preferences: { unit: 'lb', rounding: 5, autoRest: 0 },
+    achievements: {},
+    workouts: [
+      { id: 1, startTime: ${now - 5 * 86400000}, endTime: ${now - 5 * 86400000 + 3600000}, duration: 3600000, exercises: [{ name: 'Bench Press', sets: [{ weight: 100, reps: 1, done: true }] }] },
+      { id: 2, startTime: ${now - 3 * 86400000}, endTime: ${now - 3 * 86400000 + 1800000}, duration: 1800000, exercises: [{ name: 'Bike', metric: 'minutes', sets: [{ reps: 30, done: true }] }] },
+      { id: 3, startTime: ${now - 86400000}, endTime: ${now - 86400000 + 1800000}, duration: 1800000, exercises: [{ name: 'Bike', metric: 'minutes', sets: [{ reps: 30, done: true }] }] }
+    ]
+  }`,
+  context,
+);
+assert.equal(vm.runInContext("achievementMetrics().workoutCount", context), 3);
+assert.equal(
+  vm.runInContext("achievementMetrics().maxSevenDayWorkouts", context),
+  3,
+);
+assert.equal(
+  vm.runInContext("achievementMetrics().cardioMinutes", context),
+  60,
+);
+const unlockedIds = vm.runInContext(
+  "syncAchievements(3).map((achievement) => achievement.id)",
+  context,
+);
+assert.ok(unlockedIds.includes("first-ritual"));
+assert.ok(unlockedIds.includes("three-in-seven"));
+assert.ok(unlockedIds.includes("true-max"));
+assert.ok(unlockedIds.includes("cardio-hour"));
+assert.ok(unlockedIds.includes("long-session"));
+assert.equal(
+  vm.runInContext("Object.keys(state.achievements).length", context),
+  unlockedIds.length,
+  "badges should unlock only once",
+);
+assert.equal(vm.runInContext("syncAchievements(3).length", context), 0);
 
 console.log("SetRitual tests passed");

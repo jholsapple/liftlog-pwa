@@ -1362,9 +1362,9 @@
         border-radius: 10px;
         color: var(--text2);
         font-family: "DM Sans", sans-serif;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
-        padding: 9px;
+        padding: 8px 5px;
         cursor: pointer;
         transition: all 0.15s;
         letter-spacing: 0.02em;
@@ -1373,6 +1373,152 @@
         background: var(--accent-dim);
         border-color: var(--accent);
         color: var(--accent);
+      }
+
+      /* ACHIEVEMENTS */
+      .achievement-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+        padding: 4px 2px;
+      }
+      .achievement-count {
+        font-family: "Bebas Neue", sans-serif;
+        color: var(--accent);
+        font-size: 34px;
+        letter-spacing: 0.04em;
+      }
+      .achievement-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .achievement-card {
+        min-width: 0;
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .achievement-card.unlocked {
+        border-color: var(--accent);
+        background: linear-gradient(145deg, var(--accent-dim), var(--surface));
+      }
+      .achievement-pin {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        margin-bottom: 10px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        font-size: 21px;
+        filter: grayscale(1);
+        opacity: 0.55;
+      }
+      .achievement-card.unlocked .achievement-pin {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0f0f0f;
+        filter: none;
+        opacity: 1;
+        box-shadow: 0 5px 20px var(--accent-dim);
+      }
+      .achievement-name {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .achievement-description,
+      .achievement-earned {
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.4;
+        margin-top: 5px;
+      }
+      .achievement-earned {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .achievement-progress {
+        height: 5px;
+        margin-top: 10px;
+        overflow: hidden;
+        border-radius: 4px;
+        background: var(--bg3);
+      }
+      .achievement-progress > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+      }
+      .achievement-progress-label {
+        color: var(--text3);
+        font-size: 10px;
+        margin-top: 5px;
+      }
+      .milestone-card {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+        padding: 13px 14px;
+        border: 0.5px solid var(--border);
+        border-radius: 13px;
+        background: var(--surface);
+        color: var(--text);
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .milestone-card .achievement-pin {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        margin: 0;
+      }
+      .milestone-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .achievement-celebration {
+        text-align: center;
+      }
+      .achievement-celebration .achievement-pin {
+        width: 72px;
+        height: 72px;
+        margin: 2px auto 14px;
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0f0f0f;
+        filter: none;
+        opacity: 1;
+        font-size: 34px;
+      }
+      .earned-badge-list {
+        display: grid;
+        gap: 8px;
+        margin: 18px 0;
+        text-align: left;
+      }
+      .earned-badge-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 11px 12px;
+        border-radius: 11px;
+        background: var(--accent-dim);
+      }
+      @media (max-width: 360px) {
+        .achievement-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       /* TONNAGE TREND */
@@ -1750,6 +1896,13 @@
             >
               1RM
             </button>
+            <button
+              class="records-tab"
+              id="tab-badges"
+              onclick="switchRecordsTab('badges')"
+            >
+              Badges
+            </button>
           </div>
           <div id="records-prs-panel">
             <div class="card"><div id="pr-list"></div></div>
@@ -1759,6 +1912,9 @@
           </div>
           <div id="records-maxes-panel" style="display: none">
             <div class="card" id="maxes-list"></div>
+          </div>
+          <div id="records-badges-panel" style="display: none">
+            <div id="badges-list"></div>
           </div>
         </div>
 
@@ -2341,6 +2497,28 @@
       </div>
     </div>
 
+    <!-- Achievement Celebration -->
+    <div class="modal-overlay" id="achievement-modal">
+      <div class="modal achievement-celebration" style="max-width: 390px">
+        <div class="modal-handle"></div>
+        <div class="achievement-pin" id="achievement-modal-pin">✦</div>
+        <div class="modal-title">Badge unlocked</div>
+        <p id="achievement-modal-copy">Your consistency is paying off.</p>
+        <div class="earned-badge-list" id="achievement-earned-list"></div>
+        <div class="modal-actions">
+          <button
+            class="btn btn-ghost"
+            onclick="closeModal('achievement-modal')"
+          >
+            Keep training
+          </button>
+          <button class="btn btn-primary" onclick="openBadges()">
+            View badges
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Workout Detail -->
     <div class="detail-overlay" id="detail-overlay">
       <button class="back-btn" onclick="closeDetail()">
@@ -2403,8 +2581,8 @@
         {
           icon: "↗",
           title: "Learn from your training",
-          body: "History shows completed sessions and weekly volume. Records tracks PRs, exercise trends, and 1RM values. You can repeat or edit any saved workout.",
-          tip: "Use these trends to guide the next workout—not to chase volume for its own sake.",
+          body: "History shows completed sessions and weekly volume. Records tracks PRs, exercise trends, 1RM values, and badges earned through consistent training.",
+          tip: "Use trends and milestones to guide the next workout—not to chase volume for its own sake.",
         },
         {
           icon: "✦",
@@ -2413,6 +2591,223 @@
           tip: "Color changes apply instantly across buttons, timers, progress bars, and highlights.",
         },
       ];
+
+      const ACHIEVEMENTS = [
+        {
+          id: "first-ritual",
+          icon: "✦",
+          name: "First Ritual",
+          description: "Complete your first workout.",
+          target: 1,
+          progress: (metrics) => metrics.workoutCount,
+          unit: "workout",
+        },
+        {
+          id: "five-sessions",
+          icon: "⑤",
+          name: "Finding Your Rhythm",
+          description: "Complete five workouts.",
+          target: 5,
+          progress: (metrics) => metrics.workoutCount,
+          unit: "workouts",
+        },
+        {
+          id: "ten-sessions",
+          icon: "10",
+          name: "Ritual Regular",
+          description: "Complete ten workouts.",
+          target: 10,
+          progress: (metrics) => metrics.workoutCount,
+          unit: "workouts",
+        },
+        {
+          id: "three-in-seven",
+          icon: "↗",
+          name: "Momentum",
+          description: "Train three times within seven days.",
+          target: 3,
+          progress: (metrics) => metrics.maxSevenDayWorkouts,
+          unit: "sessions",
+        },
+        {
+          id: "set-century",
+          icon: "100",
+          name: "Set Century",
+          description: "Complete one hundred working sets.",
+          target: 100,
+          progress: (metrics) => metrics.completedSets,
+          unit: "sets",
+        },
+        {
+          id: "volume-10k",
+          icon: "◆",
+          name: "Five-Ton Club",
+          description: "Move 10,000 total pounds or kilograms.",
+          target: 10000,
+          progress: (metrics) => metrics.totalVolume,
+          unit: "moved",
+          format: (value) => fmtTonnage(value),
+        },
+        {
+          id: "volume-50k",
+          icon: "◇",
+          name: "Heavy Habit",
+          description: "Move 50,000 total pounds or kilograms.",
+          target: 50000,
+          progress: (metrics) => metrics.totalVolume,
+          unit: "moved",
+          format: (value) => fmtTonnage(value),
+        },
+        {
+          id: "true-max",
+          icon: "1",
+          name: "One Rep Truth",
+          description: "Log a completed weighted single-rep set.",
+          target: 1,
+          progress: (metrics) => metrics.oneRepMaxCount,
+          unit: "1RM",
+        },
+        {
+          id: "cardio-hour",
+          icon: "♥",
+          name: "Cardio Hour",
+          description: "Log sixty completed cardio minutes.",
+          target: 60,
+          progress: (metrics) => metrics.cardioMinutes,
+          unit: "minutes",
+        },
+        {
+          id: "exercise-explorer",
+          icon: "＋",
+          name: "Exercise Explorer",
+          description: "Log ten different exercises.",
+          target: 10,
+          progress: (metrics) => metrics.exerciseCount,
+          unit: "exercises",
+        },
+        {
+          id: "long-session",
+          icon: "◷",
+          name: "Long Haul",
+          description: "Complete a workout lasting at least sixty minutes.",
+          target: 60,
+          progress: (metrics) => metrics.longestMinutes,
+          unit: "minutes",
+        },
+      ];
+
+      function achievementMetrics() {
+        const workouts = state.workouts || [];
+        const completedSets = workouts.reduce(
+          (sum, workout) =>
+            sum +
+            (workout.exercises || []).reduce(
+              (exerciseSum, exercise) =>
+                exerciseSum +
+                (exercise.sets || []).filter((set) => set.done).length,
+              0,
+            ),
+          0,
+        );
+        const cardioMinutes = workouts.reduce(
+          (sum, workout) =>
+            sum +
+            (workout.exercises || []).reduce(
+              (exerciseSum, exercise) =>
+                exerciseSum +
+                (exercise.metric === "minutes"
+                  ? (exercise.sets || []).reduce(
+                      (setSum, set) =>
+                        setSum + (set.done ? Number(set.reps) || 0 : 0),
+                      0,
+                    )
+                  : 0),
+              0,
+            ),
+          0,
+        );
+        const exerciseNames = new Set();
+        workouts.forEach((workout) =>
+          (workout.exercises || []).forEach((exercise) => {
+            if ((exercise.sets || []).some((set) => set.done))
+              exerciseNames.add(exercise.name.toLowerCase());
+          }),
+        );
+        const timestamps = workouts
+          .map((workout) => workoutCompletedAt(workout))
+          .filter(Boolean)
+          .sort((a, b) => a - b);
+        let maxSevenDayWorkouts = 0;
+        for (let left = 0, right = 0; right < timestamps.length; right++) {
+          while (timestamps[right] - timestamps[left] >= 7 * 86400000) left++;
+          maxSevenDayWorkouts = Math.max(maxSevenDayWorkouts, right - left + 1);
+        }
+        return {
+          workoutCount: workouts.length,
+          completedSets,
+          totalVolume: workouts.reduce(
+            (sum, workout) => sum + calcSessionTonnage(workout),
+            0,
+          ),
+          cardioMinutes,
+          exerciseCount: exerciseNames.size,
+          oneRepMaxCount: Object.keys(computeOneRepMaxes()).length,
+          longestMinutes: workouts.reduce(
+            (longest, workout) =>
+              Math.max(longest, Math.floor((workout.duration || 0) / 60000)),
+            0,
+          ),
+          maxSevenDayWorkouts,
+        };
+      }
+
+      function achievementStatus(definition, metrics = achievementMetrics()) {
+        const progress = Math.max(
+          0,
+          Math.min(definition.target, definition.progress(metrics)),
+        );
+        return {
+          ...definition,
+          progress,
+          percent: Math.round((progress / definition.target) * 100),
+          unlocked: Boolean(state.achievements?.[definition.id]),
+          earned: state.achievements?.[definition.id] || null,
+        };
+      }
+
+      function syncAchievements(workoutId = null) {
+        if (!state.achievements) state.achievements = {};
+        const metrics = achievementMetrics();
+        const newlyUnlocked = [];
+        for (const definition of ACHIEVEMENTS) {
+          if (
+            !state.achievements[definition.id] &&
+            definition.progress(metrics) >= definition.target
+          ) {
+            state.achievements[definition.id] = {
+              unlockedAt: Date.now(),
+              workoutId,
+            };
+            newlyUnlocked.push(definition);
+          }
+        }
+        return newlyUnlocked;
+      }
+
+      function nextAchievement() {
+        const metrics = achievementMetrics();
+        return ACHIEVEMENTS.map((definition) =>
+          achievementStatus(definition, metrics),
+        )
+          .filter((achievement) => !achievement.unlocked)
+          .sort((a, b) => b.percent - a.percent)[0];
+      }
+
+      function formatAchievementValue(achievement, value) {
+        return achievement.format
+          ? achievement.format(value)
+          : Math.floor(value).toLocaleString();
+      }
 
       function loadState() {
         try {
@@ -2424,11 +2819,12 @@
       }
       function defaultState() {
         return {
-          version: 2,
+          version: 3,
           activeWorkout: null,
           workouts: [],
           templates: [],
           maxes: {},
+          achievements: {},
           preferences: { unit: "lb", rounding: 5, autoRest: 90 },
           lastBackup: null,
         };
@@ -2447,13 +2843,14 @@
             ...(state.preferences || {}),
           },
         };
-        state.version = 2;
+        state.version = 3;
         for (const workout of state.workouts || []) {
           workout.name = workout.name || "Workout";
           for (const ex of workout.exercises || [])
             for (const set of ex.sets || [])
               if (set.done === undefined) set.done = true;
         }
+        syncAchievements();
         saveState();
       }
 
@@ -2486,6 +2883,9 @@
           },
           action ? 5000 : 2500,
         );
+      }
+      function haptic(pattern = 18) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
       }
       function runUndo() {
         if (undoAction) undoAction();
@@ -2563,7 +2963,7 @@
       function exportBackup() {
         const payload = {
           ...state,
-          version: 2,
+          version: 3,
           exportedAt: new Date().toISOString(),
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -2770,12 +3170,16 @@
           (sum, workout) => sum + calcSessionTonnage(workout),
           0,
         );
+        const milestone = nextAchievement();
+        const milestoneHtml = milestone
+          ? `<button class="milestone-card" onclick="openBadges()" aria-label="View badge progress for ${esc(milestone.name)}"><div class="achievement-pin" aria-hidden="true">${milestone.icon}</div><div class="milestone-copy"><div class="template-type">Next milestone</div><div class="achievement-name">${esc(milestone.name)}</div><div class="achievement-progress"><span style="width:${milestone.percent}%"></span></div><div class="achievement-progress-label">${formatAchievementValue(milestone, milestone.progress)} of ${formatAchievementValue(milestone, milestone.target)} ${esc(milestone.unit)}</div></div><span aria-hidden="true" style="color:var(--text3);font-size:22px">›</span></button>`
+          : `<button class="milestone-card" onclick="openBadges()"><div class="achievement-pin" aria-hidden="true" style="filter:none;opacity:1;background:var(--accent);color:#0f0f0f">★</div><div class="milestone-copy"><div class="template-type">Badge collection</div><div class="achievement-name">Every current milestone unlocked</div></div><span aria-hidden="true" style="color:var(--text3);font-size:22px">›</span></button>`;
         document.getElementById("today-overview-area").innerHTML =
           `<div class="week-strip">
           <div class="week-stat"><strong>${workouts.length}</strong><span>This week</span></div>
           <div class="week-stat"><strong>${workoutStreak()}</strong><span>Day streak</span></div>
           <div class="week-stat"><strong>${fmtTonnage(volume)}</strong><span>${unitLabel()} moved</span></div>
-        </div>`;
+        </div>${milestoneHtml}`;
       }
       function previousSetHint(exerciseName, setIndex) {
         const key = exerciseName.toLowerCase();
@@ -3253,6 +3657,7 @@
         row
           .querySelector(".set-done")
           .setAttribute("aria-pressed", String(set.done));
+        if (set.done) haptic();
         if (set.done && state.preferences.autoRest > 0)
           startRest(state.preferences.autoRest);
         updateActiveOverview();
@@ -3325,6 +3730,7 @@
             saved,
           );
         else state.workouts.unshift(saved);
+        const newlyUnlocked = editing ? [] : syncAchievements(saved.id);
         state.activeWorkout = null;
         clearInterval(restTimerInterval);
         restTimerInterval = null;
@@ -3333,7 +3739,8 @@
         saveState();
         closeModal("end-workout-modal");
         renderToday();
-        if (!editing)
+        if (newlyUnlocked.length) showAchievementCelebration(newlyUnlocked);
+        else if (!editing)
           showToast(
             `Workout complete · ${complete} sets · ${fmtTonnage(calcSessionTonnage(saved))} ${unitLabel()}`,
           );
@@ -4714,9 +5121,56 @@
           .join("");
       }
 
+      function renderAchievements() {
+        const list = document.getElementById("badges-list");
+        if (!list) return;
+        const metrics = achievementMetrics();
+        const achievements = ACHIEVEMENTS.map((definition) =>
+          achievementStatus(definition, metrics),
+        );
+        const unlocked = achievements.filter(
+          (achievement) => achievement.unlocked,
+        ).length;
+        list.innerHTML = `<div class="achievement-summary"><div><div class="template-type">Your collection</div><div style="font-size:16px;font-weight:600;margin-top:3px">Every session can move a badge forward.</div></div><div style="text-align:right"><div class="achievement-count">${unlocked}/${achievements.length}</div><div class="weekly-lbl">unlocked</div></div></div><div class="achievement-grid">${achievements
+          .map(
+            (achievement) =>
+              `<div class="achievement-card ${achievement.unlocked ? "unlocked" : "locked"}"><div class="achievement-pin" aria-hidden="true">${achievement.icon}</div><div class="achievement-name">${esc(achievement.name)}</div><div class="achievement-description">${esc(achievement.description)}</div>${achievement.unlocked ? `<div class="achievement-earned">Earned ${fmtDate(achievement.earned.unlockedAt)}</div>` : `<div class="achievement-progress"><span style="width:${achievement.percent}%"></span></div><div class="achievement-progress-label">${formatAchievementValue(achievement, achievement.progress)} of ${formatAchievementValue(achievement, achievement.target)} ${esc(achievement.unit)}</div>`}</div>`,
+          )
+          .join("")}</div>`;
+      }
+
+      function showAchievementCelebration(achievements) {
+        haptic([35, 35, 90]);
+        const first = achievements[0];
+        document.getElementById("achievement-modal-pin").textContent =
+          first.icon;
+        document.querySelector("#achievement-modal .modal-title").textContent =
+          achievements.length === 1
+            ? "Badge unlocked"
+            : `${achievements.length} badges unlocked`;
+        document.getElementById("achievement-modal-copy").textContent =
+          achievements.length === 1
+            ? first.description
+            : "That workout crossed more than one milestone.";
+        document.getElementById("achievement-earned-list").innerHTML =
+          achievements
+            .map(
+              (achievement) =>
+                `<div class="earned-badge-row"><div style="font-size:22px" aria-hidden="true">${achievement.icon}</div><div><div class="achievement-name">${esc(achievement.name)}</div><div class="achievement-description">${esc(achievement.description)}</div></div></div>`,
+            )
+            .join("");
+        openModal("achievement-modal");
+      }
+
+      function openBadges() {
+        closeModal("achievement-modal");
+        showScreen("prs");
+        switchRecordsTab("badges");
+      }
+
       // ── RECORDS TABS ──
       function switchRecordsTab(tab) {
-        ["prs", "tonnage", "maxes"].forEach((t) => {
+        ["prs", "tonnage", "maxes", "badges"].forEach((t) => {
           document
             .getElementById("tab-" + t)
             .classList.toggle("active", tab === t);
@@ -4725,6 +5179,7 @@
         });
         if (tab === "tonnage") renderTonnageTrend();
         if (tab === "maxes") renderMaxes();
+        if (tab === "badges") renderAchievements();
       }
 
       function getMaxExercises() {

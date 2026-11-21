@@ -297,7 +297,7 @@ def page_inside(c):
         "Turn completed workouts into context: where you are progressing, what is consistent, and what deserves attention next.",
         [
             "Review session history and exercise trends.",
-            "Track volume, personal records, and true one-rep maxes.",
+            "Track volume, personal records, true one-rep maxes, and milestone badges.",
             "Repeat or edit past sessions without rebuilding them.",
             "Use local backups so your history remains yours.",
         ],
