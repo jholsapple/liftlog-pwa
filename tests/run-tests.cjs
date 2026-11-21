@@ -25,6 +25,9 @@ assert.ok(html.includes("Next milestone"));
 assert.ok(html.includes("today-start-card"));
 assert.ok(html.includes("Start workout"));
 assert.ok(!html.includes("Begin ${esc(todayTemplate.name)}"));
+assert.ok(html.includes('id="delete-plan-modal"'));
+assert.ok(html.includes("function deleteSelectedPlan()"));
+assert.ok(html.includes('id="plan-header-actions"'));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
