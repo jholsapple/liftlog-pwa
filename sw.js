@@ -1,4 +1,4 @@
-const CACHE = "setritual-v1";
+const CACHE = "setritual-v2-coach";
 const APP_SHELL = [
   "./",
   "./index.html",

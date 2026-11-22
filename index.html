@@ -751,6 +751,101 @@
       .set-row:last-of-type {
         border-bottom: none;
       }
+      .set-item {
+        border-bottom: 0.5px solid var(--border);
+      }
+      .set-item .set-row {
+        border-bottom: 0;
+      }
+      .set-coach {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px 10px 52px;
+        color: var(--text2);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .coach-mark {
+        color: var(--accent);
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+      .coach-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .coach-apply {
+        border: 0;
+        border-radius: 7px;
+        padding: 5px 8px;
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .effort-picker {
+        display: none;
+        align-items: center;
+        gap: 5px;
+        padding: 0 16px 10px 52px;
+        color: var(--text3);
+        font-size: 10px;
+      }
+      .set-item.done .effort-picker {
+        display: flex;
+      }
+      .effort-btn {
+        border: 0.5px solid var(--border);
+        border-radius: 7px;
+        padding: 5px 8px;
+        background: var(--bg3);
+        color: var(--text2);
+        font-family: inherit;
+        font-size: 10px;
+        cursor: pointer;
+      }
+      .effort-btn.active {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+      .mastery-badge {
+        border-radius: 999px;
+        padding: 3px 7px;
+        background: var(--accent-dim);
+        color: var(--accent);
+        font-size: 9px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .coach-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 9px;
+      }
+      .coach-level {
+        color: var(--accent);
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .coach-xp-track {
+        flex: 1;
+        height: 4px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--bg3);
+      }
+      .coach-xp-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+        transition: width 0.4s ease;
+      }
       .set-num {
         font-size: 12px;
         color: var(--text3);
@@ -2702,6 +2797,24 @@
       </div>
     </div>
 
+    <!-- Next Set Coach Recap -->
+    <div class="modal-overlay" id="coach-recap-modal">
+      <div class="modal" style="max-width: 420px">
+        <div class="modal-handle"></div>
+        <div class="workout-kicker">Next Set Coach</div>
+        <div class="modal-title" style="margin-top: 5px">Session Debrief</div>
+        <div id="coach-recap-content"></div>
+        <div class="modal-actions">
+          <button
+            class="btn btn-primary"
+            onclick="closeModal('coach-recap-modal')"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Workout Detail -->
     <div class="detail-overlay" id="detail-overlay">
       <button class="back-btn" onclick="closeDetail()">
@@ -3002,12 +3115,13 @@
       }
       function defaultState() {
         return {
-          version: 3,
+          version: 4,
           activeWorkout: null,
           workouts: [],
           templates: [],
           maxes: {},
           achievements: {},
+          coach: { xp: 0, sessions: 0 },
           preferences: { unit: "lb", rounding: 5, autoRest: 90 },
           lastBackup: null,
         };
@@ -3026,7 +3140,8 @@
             ...(state.preferences || {}),
           },
         };
-        state.version = 3;
+        state.coach = { ...defaults.coach, ...(state.coach || {}) };
+        state.version = 4;
         for (const workout of state.workouts || []) {
           workout.name = workout.name || "Workout";
           for (const ex of workout.exercises || [])
@@ -3437,8 +3552,9 @@
         const nextHtml = next
           ? `<button class="next-set-card" onclick="scrollToNextSet()" aria-label="Go to ${esc(next.ex.name)}, set ${next.si + 1}"><div class="next-set-label">Up next · Set ${next.si + 1}</div><div class="next-set-main"><div class="next-set-name">${esc(next.ex.name)}</div><div class="next-set-target">${next.ex.metric === "minutes" ? next.set.repTarget || (next.set.reps ? next.set.reps + " min" : "Log minutes") : `${next.set.weight || next.set.suggestedWeight ? (next.set.weight || next.set.suggestedWeight) + " " + unitLabel() : "Choose weight"} · ${next.set.repTarget || (next.set.reps ? next.set.reps + " reps" : "Log reps")}`}</div></div><div class="next-set-hint">${esc(previousSetHint(next.ex.name, next.si))}</div></button>`
           : "";
+        const coach = coachLevelInfo();
         document.getElementById("today-overview-area").innerHTML =
-          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
+          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div><div class="coach-status"><span class="coach-level">Coach Lv ${coach.level}</span><div class="coach-xp-track"><div class="coach-xp-fill" style="width:${Math.round((coach.current / coach.needed) * 100)}%"></div></div><span class="weekly-lbl">${coach.current}/${coach.needed} XP</span></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
       }
       function scrollToNextSet() {
         const next = nextIncompleteSet();
@@ -3612,8 +3728,15 @@
             ? `<span class="tonnage-badge">${fmtTonnage(ton)} ${unitLabel()}</span>`
             : "";
         const sets = ex.sets
-          .map(
-            (set, si) => `
+          .map((set, si) => {
+            const suggestion = set.coachSuggestion;
+            const suggestionLabel = suggestion
+              ? ex.metric === "minutes"
+                ? `${suggestion.reps} min`
+                : `${suggestion.weight} ${unitLabel()} × ${suggestion.reps}`
+              : "";
+            return `
+    <div class="set-item ${set.done ? "done" : ""}" id="set-item-${ei}-${si}">
     <div class="set-row" id="set-${ei}-${si}">
       <button class="set-num" onclick="removeSet(${ei},${si})" aria-label="Remove set ${si + 1}" title="Remove set" style="background:none;border:0;cursor:pointer">${si + 1}</button>
       <input type="text" class="set-input" placeholder="${ex.metric === "minutes" ? "—" : set.suggestedWeight ? set.suggestedWeight + " " + unitLabel() : unitLabel()}" value="${set.weight || ""}" oninput="updateSet(${ei},${si},'weight',this.value)" inputmode="decimal" enterkeyhint="next" autocomplete="off" aria-label="Weight for ${esc(ex.name)} set ${si + 1}" ${ex.metric === "minutes" ? "disabled" : ""} />
@@ -3621,14 +3744,19 @@
       <button class="set-done ${set.done ? "checked" : ""}" onclick="toggleSet(${ei},${si})" aria-label="Mark set ${si + 1} ${set.done ? "incomplete" : "complete"}" aria-pressed="${set.done}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
-    </div>`,
-          )
+    </div>
+    ${suggestion ? `<div class="set-coach"><span class="coach-mark">COACH</span><span class="coach-copy"><strong style="color:var(--text)">${esc(suggestionLabel)}</strong> · ${esc(suggestion.reason)}</span><button class="coach-apply" onclick="applyCoachSuggestion(${ei},${si})">${set.coachAccepted ? "Applied" : "Use"}</button></div>` : ""}
+    <div class="effort-picker"><span>How was it?</span>${["easy", "good", "hard"].map((effort) => `<button class="effort-btn ${set.effort === effort ? "active" : ""}" onclick="setEffort(${ei},${si},'${effort}')">${effort[0].toUpperCase() + effort.slice(1)}</button>`).join("")}</div>
+    </div>`;
+          })
           .join("");
+        const mastery = exerciseMastery(ex.name);
         return `
     <div class="exercise-block" id="exblock-${ei}">
       <div class="exercise-header">
         <span class="exercise-name">${esc(ex.name)}</span>
         <div class="ex-actions">
+          <span class="mastery-badge">LV ${mastery.level}</span>
           ${tonBadge}
           <button class="btn btn-icon" onclick="moveExercise(${ei},-1)" aria-label="Move ${esc(ex.name)} up" ${ei === 0 ? "disabled" : ""}>↑</button>
           <button class="btn btn-icon" onclick="moveExercise(${ei},1)" aria-label="Move ${esc(ex.name)} down" ${ei === state.activeWorkout.exercises.length - 1 ? "disabled" : ""}>↓</button>
@@ -3652,6 +3780,100 @@
           if (ex && ex.sets.some((s) => s.weight)) return ex.sets;
         }
         return null;
+      }
+
+      function lastCompletedExercise(exerciseName) {
+        const key = exerciseName.trim().toLowerCase();
+        for (const workout of state.workouts) {
+          const exercise = (workout.exercises || []).find(
+            (candidate) => candidate.name.trim().toLowerCase() === key,
+          );
+          if (exercise?.sets?.some((set) => set.done))
+            return { exercise, workout };
+        }
+        return null;
+      }
+
+      function exerciseMastery(exerciseName) {
+        const key = exerciseName.trim().toLowerCase();
+        let completedSets = 0;
+        let sessions = 0;
+        for (const workout of state.workouts) {
+          const exercise = (workout.exercises || []).find(
+            (candidate) => candidate.name.trim().toLowerCase() === key,
+          );
+          if (!exercise) continue;
+          const done = exercise.sets.filter((set) => set.done).length;
+          if (done) sessions++;
+          completedSets += done;
+        }
+        return {
+          level: Math.min(25, 1 + Math.floor(completedSets / 10)),
+          completedSets,
+          sessions,
+        };
+      }
+
+      function coachLevelInfo() {
+        const xp = state.coach?.xp || 0;
+        const level = 1 + Math.floor(xp / 150);
+        return { level, xp, current: xp % 150, needed: 150 };
+      }
+
+      function buildCoachSuggestion(
+        exerciseName,
+        setIndex,
+        repLow,
+        repHigh,
+        metric,
+      ) {
+        const previous = lastCompletedExercise(exerciseName);
+        if (!previous) return null;
+        const completed = previous.exercise.sets.filter((set) => set.done);
+        const prior = completed[setIndex] || completed[completed.length - 1];
+        if (!prior) return null;
+        if (metric === "minutes") {
+          const minutes = Number(prior.reps) || Number(repLow) || 10;
+          return {
+            weight: "",
+            reps: minutes,
+            reason: `Matched to ${minutes} min in your last session`,
+            sourceWorkoutId: previous.workout.id,
+          };
+        }
+        const weight = Number(prior.weight);
+        if (!weight) return null;
+        const reps = Number(prior.reps) || Number(repLow) || 8;
+        const low = Number(repLow) || reps;
+        const high = Number(repHigh) || low;
+        const step = Number(state.preferences.rounding) || 5;
+        let suggestedWeight = weight;
+        let suggestedReps = Math.max(low, Math.min(high, reps));
+        let reason = `Repeat ${weight} ${unitLabel()} and own the range`;
+        if (prior.effort === "easy" || reps >= high) {
+          suggestedWeight = roundTo5(weight + step);
+          suggestedReps = low;
+          reason =
+            prior.effort === "easy"
+              ? "Last set felt easy—small increase"
+              : "You reached the top of the rep range";
+        } else if (reps < low) {
+          suggestedWeight = Math.max(step, roundTo5(weight - step));
+          suggestedReps = low;
+          reason = "Last time missed the minimum—small reset";
+        } else if (prior.effort === "hard") {
+          suggestedReps = low;
+          reason = "Last set felt hard—hold the weight and rebuild";
+        } else {
+          suggestedReps = Math.min(high, reps + 1);
+          reason = "Add one rep before adding weight";
+        }
+        return {
+          weight: suggestedWeight,
+          reps: suggestedReps,
+          reason,
+          sourceWorkoutId: previous.workout.id,
+        };
       }
 
       function startWorkout(templateIdx) {
@@ -3719,6 +3941,18 @@
                 };
               });
             }
+            sets.forEach((set, index) => {
+              const suggestion = buildCoachSuggestion(
+                ex.name,
+                index,
+                set.repLow,
+                set.repHigh,
+                ex.metric,
+              );
+              if (!suggestion) return;
+              set.coachSuggestion = suggestion;
+              if (suggestion.weight) set.suggestedWeight = suggestion.weight;
+            });
             return { name: ex.name, metric: ex.metric, sets };
           });
         }
@@ -3745,11 +3979,22 @@
           document.getElementById("ex-name-input").focus();
           return;
         }
-        const sets = Array.from({ length: setsCount }, () => ({
-          weight: "",
-          reps: defaultReps,
-          done: false,
-        }));
+        const sets = Array.from({ length: setsCount }, (_, index) => {
+          const coachSuggestion = buildCoachSuggestion(
+            name,
+            index,
+            defaultReps,
+            defaultReps,
+            "",
+          );
+          return {
+            weight: "",
+            reps: defaultReps,
+            done: false,
+            suggestedWeight: coachSuggestion?.weight || "",
+            coachSuggestion,
+          };
+        });
         state.activeWorkout.exercises.push({ name, sets });
         startActiveWorkoutClock();
         saveState();
@@ -3826,6 +4071,41 @@
         saveState();
         updateActiveOverview();
       }
+      function applyCoachSuggestion(ei, si) {
+        const set = state.activeWorkout.exercises[ei].sets[si];
+        const suggestion = set.coachSuggestion;
+        if (!suggestion) return;
+        if (suggestion.weight !== "") set.weight = suggestion.weight;
+        set.reps = suggestion.reps;
+        set.coachAccepted = true;
+        saveState();
+        renderToday();
+        document
+          .getElementById(`set-item-${ei}-${si}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        haptic();
+      }
+      function setEffort(ei, si, effort) {
+        const set = state.activeWorkout.exercises[ei].sets[si];
+        set.effort = effort;
+        saveState();
+        document
+          .querySelectorAll(`#set-item-${ei}-${si} .effort-btn`)
+          .forEach((button) =>
+            button.classList.toggle(
+              "active",
+              button.textContent.trim().toLowerCase() === effort,
+            ),
+          );
+        showToast(
+          effort === "easy"
+            ? "Coach noted: ready to progress"
+            : effort === "hard"
+              ? "Coach noted: hold or adjust next time"
+              : "Coach noted: productive set",
+        );
+        haptic();
+      }
       function updateWorkoutNotes(value) {
         state.activeWorkout.notes = value.slice(0, 1000);
         saveState();
@@ -3839,6 +4119,9 @@
         const doneButton = row.querySelector(".set-done");
         doneButton.classList.toggle("checked", set.done);
         doneButton.setAttribute("aria-pressed", String(set.done));
+        document
+          .getElementById(`set-item-${ei}-${si}`)
+          ?.classList.toggle("done", set.done);
         if (set.done) {
           doneButton.classList.remove("just-checked");
           requestAnimationFrame(() => doneButton.classList.add("just-checked"));
@@ -3887,6 +4170,59 @@
         });
       }
 
+      function awardCoachXp(workout) {
+        const doneSets = workout.exercises
+          .flatMap((exercise) => exercise.sets)
+          .filter((set) => set.done);
+        const feedback = doneSets.filter((set) => set.effort).length;
+        const accepted = doneSets.filter((set) => set.coachAccepted).length;
+        const earned = 25 + doneSets.length * 5 + feedback * 2 + accepted * 2;
+        state.coach.xp += earned;
+        state.coach.sessions += 1;
+        workout.coachXpEarned = earned;
+        return earned;
+      }
+
+      function showCoachRecap(workout, xpEarned, unlocked = []) {
+        const sets = workout.exercises
+          .flatMap((exercise) => exercise.sets)
+          .filter((set) => set.done);
+        const easy = sets.filter((set) => set.effort === "easy").length;
+        const hard = sets.filter((set) => set.effort === "hard").length;
+        const accepted = sets.filter((set) => set.coachAccepted).length;
+        const nextTargets = workout.exercises
+          .map((exercise) => {
+            const last = exercise.sets.find((set) => set.done);
+            const suggestion = buildCoachSuggestion(
+              exercise.name,
+              0,
+              last?.repLow,
+              last?.repHigh,
+              exercise.metric,
+            );
+            if (!suggestion) return "";
+            const target =
+              exercise.metric === "minutes"
+                ? `${suggestion.reps} min`
+                : `${suggestion.weight} ${unitLabel()} × ${suggestion.reps}`;
+            return `<div class="earned-badge-row"><div style="font-size:18px" aria-hidden="true">↗</div><div><div class="achievement-name">${esc(exercise.name)}</div><div class="achievement-description">Next target: ${esc(target)} · ${esc(suggestion.reason)}</div></div></div>`;
+          })
+          .filter(Boolean)
+          .slice(0, 3)
+          .join("");
+        const observation = hard
+          ? `${hard} set${hard === 1 ? " was" : "s were"} marked hard, so the coach will favor holding or reducing those loads.`
+          : easy
+            ? `${easy} set${easy === 1 ? " felt" : "s felt"} easy. Expect a measured progression next time.`
+            : "Keep rating sets and the coach will become more precise with each session.";
+        document.getElementById("coach-recap-content").innerHTML = `
+          <div class="achievement-summary"><div><div class="achievement-name">+${xpEarned} Coach XP</div><div class="achievement-description">${sets.length} completed sets · ${accepted} coach suggestion${accepted === 1 ? "" : "s"} used</div></div><div class="achievement-count">LV ${coachLevelInfo().level}</div></div>
+          <div class="card" style="margin-bottom:12px"><div class="workout-kicker">Coach observation</div><div style="font-size:13px;line-height:1.5;margin-top:6px">${esc(observation)}</div></div>
+          ${nextTargets ? `<div class="workout-kicker" style="margin-bottom:7px">Next time</div><div class="earned-badge-list">${nextTargets}</div>` : ""}
+          ${unlocked.length ? `<div class="card" style="margin-top:12px;color:var(--accent)">Badge unlocked: ${unlocked.map((item) => esc(item.name)).join(", ")}</div>` : ""}`;
+        openModal("coach-recap-modal");
+      }
+
       function finishWorkout() {
         if (!state.activeWorkout) return;
         const complete = state.activeWorkout.exercises
@@ -3920,6 +4256,7 @@
             saved,
           );
         else state.workouts.unshift(saved);
+        const coachXp = editing ? 0 : awardCoachXp(saved);
         const newlyUnlocked = editing ? [] : syncAchievements(saved.id);
         state.activeWorkout = null;
         clearInterval(restTimerInterval);
@@ -3929,11 +4266,8 @@
         saveState();
         closeModal("end-workout-modal");
         renderToday();
-        if (newlyUnlocked.length) showAchievementCelebration(newlyUnlocked);
-        else if (!editing)
-          showToast(
-            `Workout complete · ${complete} sets · ${fmtTonnage(calcSessionTonnage(saved))} ${unitLabel()}`,
-          );
+        if (!editing) showCoachRecap(saved, coachXp, newlyUnlocked);
+        else showToast("Workout updated");
       }
 
       // ── TEMPLATES ──
@@ -5283,12 +5617,26 @@
           notes: "",
           exercises: w.exercises.map((ex) => ({
             name: ex.name,
-            sets: ex.sets.map((s) => ({
-              weight: "",
-              reps: s.reps || 8,
-              done: false,
-              suggestedWeight: s.weight || "",
-            })),
+            metric: ex.metric,
+            sets: ex.sets.map((s, index) => {
+              const coachSuggestion = buildCoachSuggestion(
+                ex.name,
+                index,
+                s.repLow || s.reps,
+                s.repHigh || s.reps,
+                ex.metric,
+              );
+              return {
+                weight: "",
+                reps: "",
+                done: false,
+                repLow: s.repLow,
+                repHigh: s.repHigh,
+                repTarget: s.repTarget,
+                suggestedWeight: coachSuggestion?.weight || s.weight || "",
+                coachSuggestion,
+              };
+            }),
           })),
         };
         saveState();

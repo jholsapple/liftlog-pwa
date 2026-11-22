@@ -32,6 +32,10 @@ assert.ok(html.includes("@keyframes screenIn"));
 assert.ok(html.includes("@keyframes badgeUnlock"));
 assert.ok(html.includes("just-checked"));
 assert.ok(html.includes("prefers-reduced-motion"));
+assert.ok(html.includes('id="coach-recap-modal"'));
+assert.ok(html.includes("function buildCoachSuggestion("));
+assert.ok(html.includes("applyCoachSuggestion"));
+assert.ok(html.includes("How was it?"));
 const source = html
   .match(/<script>([\s\S]*?)<\/script>/)[1]
   .split("// ── INIT ──")[0];
@@ -97,6 +101,16 @@ assert.equal(
   "&lt;img onerror=&quot;x&quot;&gt;",
 );
 assert.equal(context.roundTo5(113), 115);
+
+vm.runInContext(
+  `state = { coach: { xp: 0, sessions: 0 }, preferences: { unit: 'lb', rounding: 5 }, workouts: [{ id: 2, startTime: 2, exercises: [{ name: 'Bench', sets: [{ weight: 100, reps: 10, done: true, effort: 'easy' }] }] }] }`,
+  context,
+);
+const progressedSet = context.buildCoachSuggestion("Bench", 0, 8, 10, "");
+assert.equal(progressedSet.weight, 105);
+assert.equal(progressedSet.reps, 8);
+assert.match(progressedSet.reason, /easy/i);
+assert.equal(context.exerciseMastery("Bench").completedSets, 1);
 
 vm.runInContext(
   `
