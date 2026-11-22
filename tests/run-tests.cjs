@@ -20,7 +20,6 @@ assert.ok(html.includes('aria-label="Edit plan"'));
 assert.ok(html.includes('onclick="showDetail(${last.id})"'));
 assert.ok(html.includes(".plan-card .template-name"));
 assert.ok(html.includes('id="records-badges-panel"'));
-assert.ok(html.includes('id="achievement-modal"'));
 assert.ok(html.includes("Next milestone"));
 assert.ok(html.includes("today-start-card"));
 assert.ok(html.includes("Start workout"));
@@ -284,5 +283,35 @@ assert.equal(
   "badges should unlock only once",
 );
 assert.equal(vm.runInContext("syncAchievements(3).length", context), 0);
+
+const recapContent = { innerHTML: "", scrollTop: 300 };
+const openedModals = [];
+context.document.getElementById = (id) =>
+  id === "coach-recap-content" ? recapContent : null;
+context.openModal = (id) => openedModals.push(id);
+context.closeModal = () => {};
+context.renderToday = () => {};
+vm.runInContext(
+  `state = defaultState();
+  state.activeWorkout = { id: 4, startTime: Date.now() - 60000, exercises: [
+    { name: "Bench Press", sets: [{ weight: 100, reps: 8, done: true }] }
+  ] };
+  finishWorkout();`,
+  context,
+);
+assert.equal(openedModals.at(-1), "coach-recap-modal");
+assert.equal(recapContent.scrollTop, 0);
+assert.match(recapContent.innerHTML, /class="badge-trophy">🏆/);
+assert.match(recapContent.innerHTML, /class="badge-sunburst"/);
+assert.match(recapContent.innerHTML, /Badge unlocked/);
+assert.match(recapContent.innerHTML, /First Ritual/);
+assert.equal(context.renderBadgeUnlock([]), "");
+const multipleBadges = vm.runInContext(
+  "renderBadgeUnlock([ACHIEVEMENTS[0], ACHIEVEMENTS[1]])",
+  context,
+);
+assert.match(multipleBadges, /2 badges unlocked/);
+assert.match(multipleBadges, /data-badge-tone="gold"/);
+assert.match(multipleBadges, /data-badge-tone="mint"/);
 
 console.log("SetRitual tests passed");
