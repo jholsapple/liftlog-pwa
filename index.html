@@ -415,7 +415,9 @@
         margin-bottom: 10px;
       }
       .week-stat {
-        background: var(--surface);
+        background:
+          linear-gradient(150deg, var(--badge-glow), transparent),
+          var(--surface);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 11px 8px;
@@ -423,7 +425,7 @@
       }
       .week-stat strong {
         display: block;
-        color: var(--accent);
+        color: var(--badge-light);
         font-family: "Bebas Neue", sans-serif;
         font-size: 23px;
         letter-spacing: 0.04em;
@@ -1014,6 +1016,10 @@
         font-weight: 600;
         line-height: 1.2;
       }
+      .plan-card .template-icon {
+        background: var(--badge-glow);
+        border: 1px solid var(--badge-deep);
+      }
       .plan-back {
         grid-column: 1 / -1;
         display: flex;
@@ -1595,37 +1601,47 @@
         color: var(--accent);
       }
 
-      /* ACHIEVEMENTS */
-      [data-badge-tone="gold"] {
+      /* SHARED ACCENT PALETTE */
+      [data-tone="gold"] {
         --badge-light: #ffe38e;
         --badge-deep: #eba735;
         --badge-glow: #ffbc422e;
       }
-      [data-badge-tone="mint"] {
+      [data-tone="mint"] {
         --badge-light: #a3f8d4;
         --badge-deep: #32d4a0;
         --badge-glow: #32d4a02b;
       }
-      [data-badge-tone="blue"] {
+      [data-tone="blue"] {
         --badge-light: #a8e2ff;
         --badge-deep: #57a9ff;
         --badge-glow: #57a9ff2e;
       }
-      [data-badge-tone="violet"] {
+      [data-tone="violet"] {
         --badge-light: #e1c4ff;
         --badge-deep: #b285fa;
         --badge-glow: #b285fa2e;
       }
-      [data-badge-tone="rose"] {
+      [data-tone="rose"] {
         --badge-light: #ffc2d7;
         --badge-deep: #fb729e;
         --badge-glow: #fb729e2e;
       }
-      [data-badge-tone="amber"] {
+      [data-tone="amber"] {
         --badge-light: #ffd0a0;
         --badge-deep: #ff9757;
         --badge-glow: #ff97572e;
       }
+      .weekly-tonnage-card[data-tone] .weekly-val:not(.dim),
+      .coach-status[data-tone] .coach-level,
+      .achievement-summary[data-tone] .achievement-count {
+        color: var(--badge-light);
+      }
+      .coach-status[data-tone] .coach-xp-fill {
+        background: var(--badge-deep);
+      }
+
+      /* ACHIEVEMENTS */
       .achievement-summary {
         display: flex;
         align-items: center;
@@ -1646,11 +1662,43 @@
         gap: 10px;
       }
       .achievement-card {
+        display: flex;
+        flex-direction: column;
         min-width: 0;
         background: var(--surface);
         border: 0.5px solid var(--border);
         border-radius: 14px;
         padding: 14px;
+      }
+      button.achievement-card,
+      button.earned-badge-row {
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      button.earned-badge-row {
+        width: 100%;
+        border: 1px solid transparent;
+      }
+      button.achievement-card:focus-visible,
+      button.earned-badge-row:focus-visible {
+        outline: 2px solid var(--badge-light);
+        outline-offset: 2px;
+      }
+      .achievement-card-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .achievement-chevron {
+        color: var(--badge-light);
+        font-size: 18px;
+        line-height: 1;
+      }
+      .badge-unlock .achievement-chevron {
+        margin-left: auto;
       }
       .achievement-card.unlocked {
         border-color: var(--badge-deep);
@@ -1676,6 +1724,7 @@
       }
       .achievement-card.unlocked .achievement-pin,
       .milestone-card.unlocked .achievement-pin,
+      .badge-detail-dialog.unlocked .achievement-pin,
       .badge-unlock .achievement-pin {
         background: linear-gradient(
           145deg,
@@ -1689,6 +1738,7 @@
           0 4px 16px var(--badge-glow);
       }
       .achievement-name {
+        display: block;
         color: var(--text);
         font-size: 14px;
         font-weight: 600;
@@ -1696,6 +1746,7 @@
       }
       .achievement-description,
       .achievement-earned {
+        display: block;
         color: var(--text2);
         font-size: 11px;
         line-height: 1.4;
@@ -1706,6 +1757,7 @@
         font-weight: 600;
       }
       .achievement-progress {
+        display: block;
         height: 5px;
         margin-top: 10px;
         overflow: hidden;
@@ -1724,6 +1776,7 @@
         transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
       }
       .achievement-progress-label {
+        display: block;
         color: var(--text3);
         font-size: 10px;
         margin-top: 5px;
@@ -1757,6 +1810,77 @@
       .milestone-copy {
         flex: 1;
         min-width: 0;
+      }
+      .badge-detail-dialog {
+        position: fixed;
+        inset: auto 0 0;
+        width: min(100%, 420px);
+        max-width: none;
+        max-height: 90vh;
+        max-height: 90dvh;
+        margin: 0 auto;
+        padding: 20px 20px calc(20px + var(--safe-bot));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid var(--badge-deep);
+        border-radius: 20px 20px 0 0;
+        background:
+          radial-gradient(
+            ellipse at top left,
+            var(--badge-glow),
+            transparent 72%
+          ),
+          var(--bg2);
+        color: var(--text);
+      }
+      .badge-detail-dialog[open] {
+        animation: slideUp 0.25s ease-out;
+      }
+      .badge-detail-dialog::backdrop {
+        background: #000a;
+      }
+      .badge-detail-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .badge-detail-heading .achievement-pin {
+        flex: none;
+        width: 54px;
+        height: 54px;
+        margin: 0;
+      }
+      .badge-detail-title {
+        margin: 2px 0 0;
+        line-height: 1.1;
+      }
+      .badge-detail-heading .template-type {
+        color: var(--badge-light);
+      }
+      .badge-detail-copy {
+        margin: 0 0 12px;
+        color: var(--text2);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .badge-detail-goal {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .badge-detail-progress,
+      .badge-detail-workout {
+        margin-bottom: 16px;
+      }
+      .badge-detail-workout {
+        width: 100%;
+        min-height: 52px;
+        justify-content: space-between;
+        text-align: left;
+      }
+      .badge-detail-workout strong {
+        display: block;
+        overflow-wrap: anywhere;
       }
       #coach-recap-modal .modal {
         display: flex;
@@ -2924,6 +3048,19 @@
       </div>
     </div>
 
+    <!-- Badge Detail -->
+    <dialog
+      class="badge-detail-dialog"
+      id="badge-detail-dialog"
+      aria-labelledby="badge-detail-title"
+    >
+      <div class="modal-handle" aria-hidden="true"></div>
+      <div id="badge-detail-content"></div>
+      <form method="dialog">
+        <button class="btn btn-primary" autofocus>Done</button>
+      </form>
+    </dialog>
+
     <!-- Workout Detail -->
     <div class="detail-overlay" id="detail-overlay">
       <button class="back-btn" onclick="closeDetail()">
@@ -3004,6 +3141,8 @@
           icon: "✦",
           name: "First Ritual",
           description: "Complete your first workout.",
+          detail:
+            "Check off a set and save the session. Planned workouts and free sessions both count.",
           target: 1,
           progress: (metrics) => metrics.workoutCount,
           unit: "workout",
@@ -3014,6 +3153,8 @@
           icon: "⑤",
           name: "Finding Your Rhythm",
           description: "Complete five workouts.",
+          detail:
+            "Every saved session counts once, whether you follow a plan or train on your own.",
           target: 5,
           progress: (metrics) => metrics.workoutCount,
           unit: "workouts",
@@ -3024,6 +3165,8 @@
           icon: "10",
           name: "Ritual Regular",
           description: "Complete ten workouts.",
+          detail:
+            "This is a lifetime total. Sessions can be spread out over as much time as you need.",
           target: 10,
           progress: (metrics) => metrics.workoutCount,
           unit: "workouts",
@@ -3034,6 +3177,8 @@
           icon: "↗",
           name: "Momentum",
           description: "Train three times within seven days.",
+          detail:
+            "Progress shows your best seven-day stretch in your workout history. The stretch can start on any day of the week.",
           target: 3,
           progress: (metrics) => metrics.maxSevenDayWorkouts,
           unit: "sessions",
@@ -3044,6 +3189,8 @@
           icon: "100",
           name: "Set Century",
           description: "Complete one hundred working sets.",
+          detail:
+            "Every checked-off set in a saved workout counts toward your lifetime total.",
           target: 100,
           progress: (metrics) => metrics.completedSets,
           unit: "sets",
@@ -3054,6 +3201,8 @@
           icon: "◆",
           name: "Five-Ton Club",
           description: "Move 10,000 total pounds or kilograms.",
+          detail:
+            "For each completed weighted set, SetRitual multiplies weight by reps and adds it to your lifetime total.",
           target: 10000,
           progress: (metrics) => metrics.totalVolume,
           unit: "moved",
@@ -3065,6 +3214,8 @@
           icon: "◇",
           name: "Heavy Habit",
           description: "Move 50,000 total pounds or kilograms.",
+          detail:
+            "The same lifetime total used for Five-Ton Club keeps building as you log completed weighted sets.",
           target: 50000,
           progress: (metrics) => metrics.totalVolume,
           unit: "moved",
@@ -3076,6 +3227,8 @@
           icon: "1",
           name: "One Rep Truth",
           description: "Log a completed weighted single-rep set.",
+          detail:
+            "A completed set with a recorded weight and exactly one rep also appears under Records → 1RM.",
           target: 1,
           progress: (metrics) => metrics.oneRepMaxCount,
           unit: "1RM",
@@ -3086,6 +3239,8 @@
           icon: "♥",
           name: "Cardio Hour",
           description: "Log sixty completed cardio minutes.",
+          detail:
+            "Minutes from checked-off timed intervals add up across saved workouts.",
           target: 60,
           progress: (metrics) => metrics.cardioMinutes,
           unit: "minutes",
@@ -3096,6 +3251,8 @@
           icon: "＋",
           name: "Exercise Explorer",
           description: "Log ten different exercises.",
+          detail:
+            "An exercise counts once after you complete a set and save the workout. Use the same name when you repeat it.",
           target: 10,
           progress: (metrics) => metrics.exerciseCount,
           unit: "exercises",
@@ -3106,6 +3263,8 @@
           icon: "◷",
           name: "Long Haul",
           description: "Complete a workout lasting at least sixty minutes.",
+          detail:
+            "Progress shows your longest saved workout. The full hour needs to come from a single session.",
           target: 60,
           progress: (metrics) => metrics.longestMinutes,
           unit: "minutes",
@@ -3590,13 +3749,13 @@
         );
         const milestone = nextAchievement();
         const milestoneHtml = milestone
-          ? `<button class="milestone-card" data-badge-tone="${milestone.tone}" onclick="openBadges()" aria-label="View badge progress for ${esc(milestone.name)}"><div class="achievement-pin" aria-hidden="true">${milestone.icon}</div><div class="milestone-copy"><div class="template-type">Next milestone</div><div class="achievement-name">${esc(milestone.name)}</div><div class="achievement-progress"><span style="width:${milestone.percent}%"></span></div><div class="achievement-progress-label">${formatAchievementValue(milestone, milestone.progress)} of ${formatAchievementValue(milestone, milestone.target)} ${esc(milestone.unit)}</div></div><span aria-hidden="true" style="color:var(--text3);font-size:22px">›</span></button>`
-          : `<button class="milestone-card unlocked" data-badge-tone="gold" onclick="openBadges()"><div class="achievement-pin" aria-hidden="true">★</div><div class="milestone-copy"><div class="template-type">Badge collection</div><div class="achievement-name">Every current milestone unlocked</div></div><span aria-hidden="true" style="color:var(--text3);font-size:22px">›</span></button>`;
+          ? `<button class="milestone-card" data-tone="${milestone.tone}" onclick="openBadgeDetail('${milestone.id}')" aria-haspopup="dialog" aria-label="View badge progress for ${esc(milestone.name)}"><span class="achievement-pin" aria-hidden="true">${milestone.icon}</span><span class="milestone-copy"><span class="template-type">Next milestone</span><span class="achievement-name">${esc(milestone.name)}</span><span class="achievement-progress"><span style="width:${milestone.percent}%"></span></span><span class="achievement-progress-label">${formatAchievementValue(milestone, milestone.progress)} of ${formatAchievementValue(milestone, milestone.target)} ${esc(milestone.unit)}</span></span><span class="achievement-chevron" aria-hidden="true">›</span></button>`
+          : `<button class="milestone-card unlocked" data-tone="gold" onclick="openBadges()"><span class="achievement-pin" aria-hidden="true">★</span><span class="milestone-copy"><span class="template-type">Badge collection</span><span class="achievement-name">Every current milestone unlocked</span></span><span class="achievement-chevron" aria-hidden="true">›</span></button>`;
         document.getElementById("today-overview-area").innerHTML =
           `<div class="week-strip">
-          <div class="week-stat"><strong>${workouts.length}</strong><span>This week</span></div>
-          <div class="week-stat"><strong>${workoutStreak()}</strong><span>Day streak</span></div>
-          <div class="week-stat"><strong>${fmtTonnage(volume)}</strong><span>${unitLabel()} moved</span></div>
+          <div class="week-stat" data-tone="mint"><strong>${workouts.length}</strong><span>This week</span></div>
+          <div class="week-stat" data-tone="amber"><strong>${workoutStreak()}</strong><span>Day streak</span></div>
+          <div class="week-stat" data-tone="blue"><strong>${fmtTonnage(volume)}</strong><span>${unitLabel()} moved</span></div>
         </div>${milestoneHtml}`;
       }
       function previousSetHint(exerciseName, setIndex) {
@@ -3674,7 +3833,7 @@
           : "";
         const coach = coachLevelInfo();
         document.getElementById("today-overview-area").innerHTML =
-          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div><div class="coach-status"><span class="coach-level">Coach Lv ${coach.level}</span><div class="coach-xp-track"><div class="coach-xp-fill" style="width:${Math.round((coach.current / coach.needed) * 100)}%"></div></div><span class="weekly-lbl">${coach.current}/${coach.needed} XP</span></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
+          `<div class="card session-overview"><div><div class="workout-kicker">${esc(state.activeWorkout.name || "Workout")}</div><div style="font-size:14px;margin-top:4px">${done} of ${total} sets complete</div><div class="session-progress-track"><div class="session-progress-fill" style="width:${pct}%"></div></div><div class="coach-status" data-tone="violet"><span class="coach-level">Coach Lv ${coach.level}</span><div class="coach-xp-track"><div class="coach-xp-fill" style="width:${Math.round((coach.current / coach.needed) * 100)}%"></div></div><span class="weekly-lbl">${coach.current}/${coach.needed} XP</span></div>${completeMessage}</div><div><div class="elapsed" id="elapsed-time">${formatElapsed(workoutElapsedMs())}</div><div class="weekly-lbl">Elapsed</div></div></div>${nextHtml}`;
       }
       function scrollToNextSet() {
         const next = nextIncompleteSet();
@@ -4338,7 +4497,7 @@
         const recap = document.getElementById("coach-recap-content");
         recap.innerHTML = `
           ${renderBadgeUnlock(unlocked)}
-          <div class="achievement-summary"><div><div class="achievement-name">+${xpEarned} Coach XP</div><div class="achievement-description">${sets.length} completed sets · ${accepted} coach suggestion${accepted === 1 ? "" : "s"} used</div></div><div class="achievement-count">LV ${coachLevelInfo().level}</div></div>
+          <div class="achievement-summary" data-tone="violet"><div><div class="achievement-name">+${xpEarned} Coach XP</div><div class="achievement-description">${sets.length} completed sets · ${accepted} coach suggestion${accepted === 1 ? "" : "s"} used</div></div><div class="achievement-count">LV ${coachLevelInfo().level}</div></div>
           <div class="card" style="margin-bottom:12px"><div class="workout-kicker">Coach observation</div><div style="font-size:13px;line-height:1.5;margin-top:6px">${esc(observation)}</div></div>
           ${nextTargets ? `<div class="workout-kicker" style="margin-bottom:7px">Next time</div><div class="earned-badge-list">${nextTargets}</div>` : ""}`;
         openModal("coach-recap-modal");
@@ -4464,6 +4623,7 @@
             const cardioCount = templates.filter(isCardioTemplate).length;
             const allCardio = cardioCount === templates.length;
             const allWeights = cardioCount === 0;
+            const tone = allCardio ? "rose" : allWeights ? "violet" : "blue";
             const icon = allCardio
               ? templateIcon(templates[0])
               : allWeights
@@ -4473,7 +4633,7 @@
               (sum, template) => sum + template.exercises.length,
               0,
             );
-            return `<button class="template-card plan-card" onclick="openPlanGroup(${groupIndex})" aria-label="Open ${esc(group.name)} plan">
+            return `<button class="template-card plan-card" data-tone="${tone}" onclick="openPlanGroup(${groupIndex})" aria-label="Open ${esc(group.name)} plan">
       <div class="template-header"><div class="template-visual"><div class="template-icon" aria-hidden="true">${icon}</div><div><div class="template-name">${esc(group.name)}</div><div class="template-meta">${templates.length} workout${templates.length === 1 ? "" : "s"} · ${exerciseCount} exercises</div>${group.description ? `<div class="plan-description">${esc(group.description)}</div>` : ""}</div></div><span aria-hidden="true" style="color:var(--text3);font-size:24px">›</span></div>
     </button>`;
           })
@@ -5591,7 +5751,7 @@
           delta = "New week";
           deltaClass = "up";
         }
-        area.innerHTML = `<div class="weekly-tonnage-card">
+        area.innerHTML = `<div class="weekly-tonnage-card" data-tone="blue">
     <div class="weekly-col">
       <div class="weekly-val">${fmtTonnage(thisWeek)} <span style="font-size:14px;color:var(--text2);font-family:'DM Sans',sans-serif;letter-spacing:0">${unitLabel()}</span></div>
       <div class="weekly-lbl">This week</div>
@@ -5844,10 +6004,89 @@
         ).length;
         list.innerHTML = `<div class="achievement-summary"><div><div class="template-type">Your collection</div><div style="font-size:16px;font-weight:600;margin-top:3px">Every session can move a badge forward.</div></div><div style="text-align:right"><div class="achievement-count">${unlocked}/${achievements.length}</div><div class="weekly-lbl">unlocked</div></div></div><div class="achievement-grid">${achievements
           .map(
-            (achievement) =>
-              `<div class="achievement-card ${achievement.unlocked ? "unlocked" : "locked"}" data-badge-tone="${achievement.tone}"><div class="achievement-pin" aria-hidden="true">${achievement.icon}</div><div class="achievement-name">${esc(achievement.name)}</div><div class="achievement-description">${esc(achievement.description)}</div>${achievement.unlocked ? `<div class="achievement-earned">Earned ${fmtDate(achievement.earned.unlockedAt)}</div>` : `<div class="achievement-progress"><span style="width:${achievement.percent}%"></span></div><div class="achievement-progress-label">${formatAchievementValue(achievement, achievement.progress)} of ${formatAchievementValue(achievement, achievement.target)} ${esc(achievement.unit)}</div>`}</div>`,
+            (achievement) => `
+              <button type="button" class="achievement-card ${achievement.unlocked ? "unlocked" : "locked"}" data-tone="${achievement.tone}" onclick="openBadgeDetail('${achievement.id}')" aria-haspopup="dialog">
+                <span class="achievement-card-heading"><span class="achievement-pin" aria-hidden="true">${achievement.icon}</span><span class="achievement-chevron" aria-hidden="true">›</span></span>
+                <span class="achievement-name">${esc(achievement.name)}</span>
+                <span class="achievement-description">${esc(achievement.description)}</span>
+                ${achievement.unlocked ? `<span class="achievement-earned">Earned ${fmtDate(achievement.earned.unlockedAt)}</span>` : `<span class="achievement-progress" aria-hidden="true"><span style="width:${achievement.percent}%"></span></span><span class="achievement-progress-label">${formatAchievementValue(achievement, achievement.progress)} of ${formatAchievementValue(achievement, achievement.target)} ${esc(achievement.unit)}</span>`}
+              </button>`,
           )
           .join("")}</div>`;
+      }
+
+      function renderBadgeDetail(achievement, workout) {
+        const earnedDate = new Date(achievement.earned?.unlockedAt);
+        const status = !achievement.unlocked
+          ? "In progress"
+          : Number.isNaN(earnedDate.getTime())
+            ? "Earned"
+            : `Earned ${earnedDate.toLocaleDateString(undefined, { dateStyle: "long" })}`;
+        const progress = achievement.progress.toLocaleString(undefined, {
+          maximumFractionDigits: 2,
+        });
+        const target = achievement.target.toLocaleString();
+        const metric =
+          achievement.unit === "moved"
+            ? unitLabel() + " moved"
+            : achievement.unit;
+        return `
+          <div class="badge-detail-heading">
+            <span class="achievement-pin" aria-hidden="true">${achievement.icon}</span>
+            <div><div class="template-type">${esc(status)}</div><h2 class="modal-title badge-detail-title" id="badge-detail-title">${esc(achievement.name)}</h2></div>
+          </div>
+          <p class="badge-detail-copy badge-detail-goal">${esc(achievement.description)}</p>
+          <p class="badge-detail-copy">${esc(achievement.detail)}</p>
+          ${
+            achievement.unlocked
+              ? ""
+              : `<div class="badge-detail-progress">
+            <div class="badge-detail-copy"><strong>${esc(`${progress} of ${target} ${metric}`)}</strong></div>
+            <div class="achievement-progress" role="progressbar" aria-label="Badge progress" aria-valuemin="0" aria-valuemax="${achievement.target}" aria-valuenow="${achievement.progress}"><span style="width:${achievement.percent}%"></span></div>
+          </div>`
+          }
+          ${
+            workout
+              ? `<button type="button" class="btn btn-ghost badge-detail-workout" onclick="openBadgeWorkout('${achievement.id}')">
+            <span><span class="template-type">View unlock workout</span><strong>${esc(workout.name || "Workout")}</strong></span><span class="achievement-chevron" aria-hidden="true">›</span>
+          </button>`
+              : ""
+          }`;
+      }
+
+      function openBadgeDetail(id) {
+        const definition = ACHIEVEMENTS.find((item) => item.id === id);
+        if (!definition) return;
+        const achievement = achievementStatus(definition);
+        const workoutId = achievement.earned?.workoutId;
+        const workout =
+          workoutId == null
+            ? null
+            : state.workouts.find((item) => item.id === workoutId);
+        const dialog = document.getElementById("badge-detail-dialog");
+        dialog.dataset.tone = achievement.tone;
+        dialog.classList.toggle("unlocked", achievement.unlocked);
+        document.getElementById("badge-detail-content").innerHTML =
+          renderBadgeDetail(achievement, workout);
+        dialog.showModal();
+        dialog.scrollTop = 0;
+      }
+
+      function openBadgeWorkout(id) {
+        const workoutId = state.achievements?.[id]?.workoutId;
+        if (
+          workoutId == null ||
+          !state.workouts.some((item) => item.id === workoutId)
+        )
+          return;
+        document.getElementById("badge-detail-dialog").close();
+        if (
+          document
+            .getElementById("coach-recap-modal")
+            .classList.contains("open")
+        )
+          closeModal("coach-recap-modal");
+        showDetail(workoutId);
       }
 
       function renderBadgeUnlock(achievements) {
@@ -5859,16 +6098,17 @@
         const badges = achievements
           .map(
             (achievement) => `
-          <div class="earned-badge-row" data-badge-tone="${achievement.tone}">
-            <div class="achievement-pin" aria-hidden="true">${achievement.icon}</div>
-            <div>
-              <div class="achievement-name">${esc(achievement.name)}</div>
-              <div class="achievement-description">${esc(achievement.description)}</div>
-            </div>
-          </div>`,
+          <button type="button" class="earned-badge-row" data-tone="${achievement.tone}" onclick="openBadgeDetail('${achievement.id}')" aria-haspopup="dialog">
+            <span class="achievement-pin" aria-hidden="true">${achievement.icon}</span>
+            <span>
+              <span class="achievement-name">${esc(achievement.name)}</span>
+              <span class="achievement-description">${esc(achievement.description)}</span>
+            </span>
+            <span class="achievement-chevron" aria-hidden="true">›</span>
+          </button>`,
           )
           .join("");
-        return `<section class="badge-unlock" data-badge-tone="${achievements[0].tone}" aria-labelledby="badge-unlock-title">
+        return `<section class="badge-unlock" data-tone="${achievements[0].tone}" aria-labelledby="badge-unlock-title">
           <div class="badge-trophy-stage" aria-hidden="true">
             <div class="badge-sunburst"></div>
             <div class="badge-trophy">🏆</div>
@@ -6153,7 +6393,11 @@
             return;
           }
         }
-        if (e.key !== "Escape") return;
+        if (
+          e.key !== "Escape" ||
+          document.getElementById("badge-detail-dialog")?.open
+        )
+          return;
         const modal = document.querySelector(".modal-overlay.open");
         if (modal) closeModal(modal.id);
         else if (

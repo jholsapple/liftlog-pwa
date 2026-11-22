@@ -311,7 +311,24 @@ const multipleBadges = vm.runInContext(
   context,
 );
 assert.match(multipleBadges, /2 badges unlocked/);
-assert.match(multipleBadges, /data-badge-tone="gold"/);
-assert.match(multipleBadges, /data-badge-tone="mint"/);
+assert.match(multipleBadges, /data-tone="gold"/);
+assert.match(multipleBadges, /data-tone="mint"/);
+assert.match(recapContent.innerHTML, /openBadgeDetail\('first-ritual'\)/);
+
+const inProgressBadge = vm.runInContext(
+  "renderBadgeDetail(achievementStatus(ACHIEVEMENTS.find((item) => item.id === 'three-in-seven')))",
+  context,
+);
+assert.match(inProgressBadge, /1 of 3 sessions/);
+assert.match(inProgressBadge, /best seven-day stretch/);
+assert.doesNotMatch(inProgressBadge, /View unlock workout/);
+const earnedBadge = vm.runInContext(
+  "renderBadgeDetail(achievementStatus(ACHIEVEMENTS[0]), { name: '<Sample workout>' })",
+  context,
+);
+assert.match(earnedBadge, /Earned /);
+assert.match(earnedBadge, /&lt;Sample workout&gt;/);
+assert.match(earnedBadge, /openBadgeWorkout\('first-ritual'\)/);
+assert.doesNotMatch(earnedBadge, /role="progressbar"/);
 
 console.log("SetRitual tests passed");
